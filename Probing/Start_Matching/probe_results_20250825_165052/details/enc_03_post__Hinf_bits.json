@@ -1,0 +1,15 @@
+{
+  "layer": "enc_03_post",
+  "target": "Hinf_bits",
+  "target_type": "scalar",
+  "metrics": {
+    "r2_macro": 0.935315363084519,
+    "mae_macro": 0.039779422954858826,
+    "rmse_macro": 0.05393570759597789,
+    "pearson": 0.9671170757453893,
+    "spearman": 0.8676322886483153
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

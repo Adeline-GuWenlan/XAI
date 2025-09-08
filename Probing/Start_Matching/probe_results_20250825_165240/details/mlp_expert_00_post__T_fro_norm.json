@@ -1,0 +1,15 @@
+{
+  "layer": "mlp_expert_00_post",
+  "target": "T_fro_norm",
+  "target_type": "scalar",
+  "metrics": {
+    "r2_macro": 0.15746397373654608,
+    "mae_macro": 0.18607176247377594,
+    "rmse_macro": 0.23076083712181286,
+    "pearson": 0.3968173052862438,
+    "spearman": 0.39028890335842503
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

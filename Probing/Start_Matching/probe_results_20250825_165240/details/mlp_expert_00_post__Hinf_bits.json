@@ -1,0 +1,15 @@
+{
+  "layer": "mlp_expert_00_post",
+  "target": "Hinf_bits",
+  "target_type": "scalar",
+  "metrics": {
+    "r2_macro": 0.07139963496297996,
+    "mae_macro": 0.16671429776982088,
+    "rmse_macro": 0.2043573363741742,
+    "pearson": 0.26720710532382996,
+    "spearman": 0.27056544475523203
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

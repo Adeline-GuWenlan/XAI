@@ -1,0 +1,13 @@
+{
+  "layer": "mlp_expert_00_post",
+  "target": "r_bloch_A",
+  "target_type": "vec3",
+  "metrics": {
+    "r2_macro": 0.003507247914073419,
+    "mae_macro": 0.33091948274108346,
+    "rmse_macro": 0.4011147878184594
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

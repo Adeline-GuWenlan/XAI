@@ -1,0 +1,15 @@
+{
+  "layer": "mlp_gating_post",
+  "target": "CHSH_bound_max",
+  "target_type": "scalar",
+  "metrics": {
+    "r2_macro": 0.6750630082282816,
+    "mae_macro": 0.15161105596073568,
+    "rmse_macro": 0.19582638174715544,
+    "pearson": 0.8216221811633502,
+    "spearman": 0.8368434396734254
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

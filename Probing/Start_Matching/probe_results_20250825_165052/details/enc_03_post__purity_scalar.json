@@ -1,0 +1,15 @@
+{
+  "layer": "enc_03_post",
+  "target": "purity_scalar",
+  "target_type": "scalar",
+  "metrics": {
+    "r2_macro": 0.9779511323649239,
+    "mae_macro": 0.019998234311134382,
+    "rmse_macro": 0.025286846675534984,
+    "pearson": 0.9889141268020181,
+    "spearman": 0.8637033885281754
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}
