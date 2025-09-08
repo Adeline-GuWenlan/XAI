@@ -1,0 +1,15 @@
+{
+  "layer": "mlp_expert_02_post",
+  "target": "C_conc",
+  "target_type": "scalar",
+  "metrics": {
+    "r2_macro": 0.0723646960654879,
+    "mae_macro": 0.18767267260129356,
+    "rmse_macro": 0.22466826925498506,
+    "pearson": 0.26900691315757963,
+    "spearman": 0.24328208691797207
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

@@ -1,0 +1,14 @@
+{
+  "layer": "enc_02_post",
+  "target": "T_corr",
+  "target_type": "mat3x3",
+  "metrics": {
+    "r2_macro": 0.950266166604247,
+    "mae_macro": 0.06749736489647175,
+    "rmse_macro": 0.08676371278690828,
+    "fro_rmse": 0.2520175728607559
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

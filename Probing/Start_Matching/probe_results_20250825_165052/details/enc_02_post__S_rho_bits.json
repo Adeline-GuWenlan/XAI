@@ -1,0 +1,15 @@
+{
+  "layer": "enc_02_post",
+  "target": "S_rho_bits",
+  "target_type": "scalar",
+  "metrics": {
+    "r2_macro": 0.9720289787182885,
+    "mae_macro": 0.04866609513411144,
+    "rmse_macro": 0.06114107578426464,
+    "pearson": 0.9859153005257552,
+    "spearman": 0.8630316599705541
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

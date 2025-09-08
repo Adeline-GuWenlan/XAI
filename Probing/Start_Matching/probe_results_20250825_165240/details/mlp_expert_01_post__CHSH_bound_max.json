@@ -1,0 +1,15 @@
+{
+  "layer": "mlp_expert_01_post",
+  "target": "CHSH_bound_max",
+  "target_type": "scalar",
+  "metrics": {
+    "r2_macro": 0.18954027088159542,
+    "mae_macro": 0.24484172079147976,
+    "rmse_macro": 0.3092696777990387,
+    "pearson": 0.4353622304586412,
+    "spearman": 0.45753092111770227
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

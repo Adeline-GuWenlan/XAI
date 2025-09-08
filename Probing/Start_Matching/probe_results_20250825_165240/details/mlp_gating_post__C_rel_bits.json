@@ -1,0 +1,15 @@
+{
+  "layer": "mlp_gating_post",
+  "target": "C_rel_bits",
+  "target_type": "scalar",
+  "metrics": {
+    "r2_macro": 0.4159831071946508,
+    "mae_macro": 0.2099382250479622,
+    "rmse_macro": 0.2715441957599354,
+    "pearson": 0.6449675262383207,
+    "spearman": 0.6580992702336078
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

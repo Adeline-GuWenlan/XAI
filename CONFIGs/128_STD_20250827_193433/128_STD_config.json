@@ -1,0 +1,29 @@
+{
+  "exp_name": "128_STD",
+  "num_qubits": 2,
+  "d_model": 128,
+  "use_physics_mask": false,
+  "pooling_type": "cls",
+  "mlp_type": "standard",
+  "matrix_dim": 4,
+  "device": "cuda:0",
+  "batch_size": 512,
+  "epochs": 200,
+  "lr": 0.0001,
+  "train_ratio": 0.8,
+  "val_ratio": 0.1,
+  "pytorch_version": "2.5.1+cu121",
+  "mask_threshold": 1,
+  "dummy_test": false,
+  "nhead": 8,
+  "use_cls_token": true,
+  "data_folder": "/home/gwl/DecodedTokens_backup",
+  "labels_path": "/home/gwl/label/magic_labels_for_input_for_2_qubits_mixed_2_200000_datapoints.npy",
+  "experiment_info": {
+    "exp_name": "128_STD",
+    "timestamp": "20250827_193433",
+    "exp_dir": "experiments/128_STD_20250827_193433",
+    "model_path": "models/best_128_STD_20250827_193433.pth",
+    "log_path": "experiments/128_STD_20250827_193433/128_STD.csv"
+  }
+}

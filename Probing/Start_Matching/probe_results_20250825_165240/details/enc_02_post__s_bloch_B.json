@@ -1,0 +1,13 @@
+{
+  "layer": "enc_02_post",
+  "target": "s_bloch_B",
+  "target_type": "vec3",
+  "metrics": {
+    "r2_macro": 0.9561654842397188,
+    "mae_macro": 0.0649549831680689,
+    "rmse_macro": 0.08360564946340455
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

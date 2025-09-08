@@ -1,0 +1,15 @@
+{
+  "layer": "mlp_expert_01_pre",
+  "target": "purity_scalar",
+  "target_type": "scalar",
+  "metrics": {
+    "r2_macro": 0.9779548443648891,
+    "mae_macro": 0.019999098107676246,
+    "rmse_macro": 0.025284718023704005,
+    "pearson": 0.9889160034805606,
+    "spearman": 0.8637066360533122
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

@@ -1,0 +1,54 @@
+{
+  "model_parameters": {
+    "exp_name": "64_CLS_asymmetric_ensemble",
+    "num_qubits": 2,
+    "d_model": 64,
+    "use_physics_mask": false,
+    "pooling_type": "cls",
+    "mlp_type": "asymmetric_ensemble",
+    "matrix_dim": 4,
+    "device": "cuda:0",
+    "batch_size": 512,
+    "epochs": 100,
+    "lr": 0.0001,
+    "train_ratio": 0.8,
+    "val_ratio": 0.1,
+    "pytorch_version": "2.5.1+cu121",
+    "mask_threshold": 1,
+    "dummy_test": false,
+    "nhead": 8,
+    "use_cls_token": true,
+    "data_folder": "/home/gwl/DURF/Transformer/dataset/Decoded_Tokens",
+    "labels_path": "/home/gwl/DURF/Transformer/dataset/Label/magic_labels_for_input_for_2_qubits_mixed_1_200000_datapoints.npy",
+    "experiment_info": {
+      "exp_name": "64_CLS_asymmetric_ensemble",
+      "timestamp": "20250810_024658",
+      "exp_dir": "experiments/64_CLS_asymmetric_ensemble_20250810_024658",
+      "model_path": "models/best_64_CLS_asymmetric_ensemble_20250810_024658.pth",
+      "log_path": "experiments/64_CLS_asymmetric_ensemble_20250810_024658/64_CLS_asymmetric_ensemble.csv"
+    }
+  },
+  "final_metrics": {
+    "mse": 0.00012926982890348881,
+    "mae": 0.008906958624720573,
+    "r2": 0.9826145172119141,
+    "spearman": 0.9915085278317508,
+    "pearson": 0.9913206100463867,
+    "acc@0.01": 0.6392,
+    "acc@0.05": 0.99995,
+    "acc@0.1": 1.0,
+    "acc@0.2": 1.0,
+    "acc@0.3": 1.0,
+    "acc@0.4": 1.0,
+    "acc@0.5": 1.0,
+    "epoch": "final",
+    "split": "test",
+    "lr": 0.0001
+  },
+  "model_path": "models/best_64_CLS_asymmetric_ensemble_20250810_024658.pth",
+  "experiment_paths": {
+    "log_path": "experiments/64_CLS_asymmetric_ensemble_20250810_024658/64_CLS_asymmetric_ensemble.csv",
+    "config_path": "experiments/64_CLS_asymmetric_ensemble_20250810_024658/64_CLS_asymmetric_ensemble_config.json",
+    "exp_dir": "experiments/64_CLS_asymmetric_ensemble_20250810_024658"
+  }
+}

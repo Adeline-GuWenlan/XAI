@@ -1,0 +1,14 @@
+{
+  "layer": "mlp_expert_01_post",
+  "target": "T_corr",
+  "target_type": "mat3x3",
+  "metrics": {
+    "r2_macro": 0.003952012940162107,
+    "mae_macro": 0.33089223920410027,
+    "rmse_macro": 0.4011768214300546,
+    "fro_rmse": 1.1769287674984181
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}

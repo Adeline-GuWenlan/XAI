@@ -1,0 +1,54 @@
+{
+  "model_parameters": {
+    "exp_name": "3q_d1024_h4_moe",
+    "num_qubits": 3,
+    "d_model": 1024,
+    "use_physics_mask": false,
+    "pooling_type": "cls",
+    "mlp_type": "mixture_of_experts",
+    "matrix_dim": 8,
+    "device": "cuda:0",
+    "batch_size": 512,
+    "epochs": 100,
+    "lr": 0.0001,
+    "train_ratio": 0.8,
+    "val_ratio": 0.1,
+    "pytorch_version": "2.5.1+cu121",
+    "mask_threshold": 1.0,
+    "dummy_test": false,
+    "nhead": 4,
+    "use_cls_token": true,
+    "data_folder": "Decoded_Tokens",
+    "labels_path": "Label/magic_labels_for_input_for_3_qubits_mixed_10000_datapoints.npy",
+    "experiment_info": {
+      "exp_name": "3q_d1024_h4_moe",
+      "timestamp": "20250902_210914",
+      "exp_dir": "experiments/3q_d1024_h4_moe_20250902_210914",
+      "model_path": "models/best_3q_d1024_h4_moe_20250902_210914.pth",
+      "log_path": "experiments/3q_d1024_h4_moe_20250902_210914/3q_d1024_h4_moe.csv"
+    }
+  },
+  "final_metrics": {
+    "mse": 0.001986953429877758,
+    "mae": 0.03413770720362663,
+    "r2": 0.8864604234695435,
+    "spearman": 0.9323758911730189,
+    "pearson": 0.9424528479576111,
+    "acc@0.01": 0.207,
+    "acc@0.05": 0.755,
+    "acc@0.1": 0.97,
+    "acc@0.2": 0.999,
+    "acc@0.3": 1.0,
+    "acc@0.4": 1.0,
+    "acc@0.5": 1.0,
+    "epoch": "final",
+    "split": "test",
+    "lr": 3.4299999999999993e-05
+  },
+  "model_path": "models/best_3q_d1024_h4_moe_20250902_210914.pth",
+  "experiment_paths": {
+    "log_path": "experiments/3q_d1024_h4_moe_20250902_210914/3q_d1024_h4_moe.csv",
+    "config_path": "experiments/3q_d1024_h4_moe_20250902_210914/3q_d1024_h4_moe_config.json",
+    "exp_dir": "experiments/3q_d1024_h4_moe_20250902_210914"
+  }
+}

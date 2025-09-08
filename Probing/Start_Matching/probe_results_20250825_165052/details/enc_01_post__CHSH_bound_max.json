@@ -1,0 +1,15 @@
+{
+  "layer": "enc_01_post",
+  "target": "CHSH_bound_max",
+  "target_type": "scalar",
+  "metrics": {
+    "r2_macro": 0.795874425082997,
+    "mae_macro": 0.12380469256619284,
+    "rmse_macro": 0.15521022636699114,
+    "pearson": 0.8921933073094193,
+    "spearman": 0.8944943853813179
+  },
+  "cv_folds": 5,
+  "alpha": 1.0,
+  "n_samples": 50000
+}
