@@ -3,7 +3,7 @@
 # weighted pure state + probabilities (weight) to mixed state
 # purity less than one (change coefficient) (How to implement this step?)
 # the number of pure states doesn't need to exceed the dimensions
-
+import random
 import numpy as np
 def random_pure_state(D: int) -> np.ndarray:
     psi = np.random.randn(D) + 1j * np.random.randn(D)
@@ -13,17 +13,26 @@ def random_pure_state(D: int) -> np.ndarray:
 # random valid (random complex matrix), normalize (Did I implement this step?), 
 # dot product (Is this step necessary??) + random weights
 
-def random_mixed_state(D: int, rank: int = None) -> np.ndarray:
+def random_mixed_state(D: int) -> np.ndarray:
     """
     Random mixed state: mix several random pure states using random weights.
     rank: number of pure states involved in the mixture (≤ D). Defaults to D.
     """
-    rank = D if rank is None else min(rank, D)
+    # modified 9.9 - 
+    # change the distribution: probabilities p multiples a pure state and (1-p)identity/ divode by d
+    p = random.random()
+    rho = random_pure_state(D) * p + (1 - p) * np.eye(D) / D
+    print("thse is rho before normalization:")
+    print(rho)
+    print("this is trace before normalization:")
+    print(np.trace(rho))
+
+    return rho  # Normalize to ensure trace is 1
+    """rank = D if rank is None else min(rank, D)
     weights = np.random.rand(rank)
     weights /= weights.sum()
     rho = sum(w * random_pure_state(D) for w in weights)
-    return rho
-# change the distribution: probabilities p multiples a pure state and (1-p)identity/ divode by d
+    return rho"""
 def _tolerance(dim, base=1e-12, scale='linear'):
     """
     Return a tolerance threshold based on the given dimension.
