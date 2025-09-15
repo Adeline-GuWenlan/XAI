@@ -131,9 +131,9 @@ def main():
     parser = argparse.ArgumentParser(description='Batch generate datasets with different lambda values')
     parser.add_argument('--num', type=int, default=1000, help='Number of samples per dataset')
     parser.add_argument('--qubits', type=int, default=2, help='Number of qubits')
-    parser.add_argument('--start_lam', type=float, default=1.0, help='Starting lambda value')
-    parser.add_argument('--end_lam', type=float, default=35.0, help='Ending lambda value')
-    parser.add_argument('--step_lam', type=float, default=5.0, help='Lambda step size')
+    parser.add_argument('--start_lam', type=float, default=0.1, help='Starting lambda value')
+    parser.add_argument('--end_lam', type=float, default=2.0, help='Ending lambda value')
+    parser.add_argument('--step_lam', type=float, default=0.1, help='Lambda step size')
     
     args = parser.parse_args()
     
