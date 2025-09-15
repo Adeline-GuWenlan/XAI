@@ -15,6 +15,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'Utils'))
 #======== paste here for reference ========
 import random
 import numpy as np
+# Sep. 15 
+# UNCHANGED
 def random_pure_state(D: int) -> np.ndarray:
     psi = np.random.randn(D) + 1j * np.random.randn(D)
     psi /= np.linalg.norm(psi)
@@ -23,15 +25,21 @@ def random_pure_state(D: int) -> np.ndarray:
 # Sep.15 Update 2 qubits
 # start with lam == 1
 def random_mixed_state_poisson(D, lam=1.0):
+    # lam == hyper para. args input
     """
     K ~ Poisson(lam) + 1 
     """
     K = np.random.poisson(lam) + 1
+    # To make sure that we at least have one to mix with
+    # K = selecting how much we want to mix
     rho = np.zeros((D, D), dtype=np.complex128)
+    # Empty rho
     for _ in range(K):
         rho += random_pure_state(D)
-    rho /= K               # 求平均
-    rho /= np.trace(rho)   # 规范化迹
+    rho /= K
+    # here we giving all pure states equal weights;
+    # which can be modified later to give more weoghts to pure states on certain direction?               
+    rho /= np.trace(rho)
     return rho
 
 # 1 qubit
@@ -83,6 +91,9 @@ def get_sn(rho, qubits=2):
         
         sn = abs(rx) + abs(ry) + abs(rz)
         return sn
+    ## Sep.15 Update: sum of absolute values of all non-identity Pauli trace
+    # manual extraction basis  
+    # 枚举 其实还挺快的
     elif qubits == 2:
         I = np.array([[1,0],[0,1]], dtype=np.complex128)
         X = np.array([[0,1],[1,0]], dtype=np.complex128)
@@ -90,14 +101,15 @@ def get_sn(rho, qubits=2):
         Z = np.array([[1,0],[0,-1]], dtype=np.complex128)
         paulis = [I, X, Y, Z]
         sn = 0.0
-        # 双重循环遍历 16 个 Pauli 张量积中的 15 个非恒等项
+        # traverse all possible combinatioms 
         for i in range(4):
             for j in range(4):
                 if i == 0 and j == 0:
-                    continue  # 跳过 I⊗I
-                sigma = np.kron(paulis[i], paulis[j])
-                sn += abs(np.trace(rho @ sigma))
-        return sn
+                    continue  # skip I dot I cuz no contribution
+                sig = np.kron(paulis[i], paulis[j])
+                # Kronecker product
+                sn += abs(np.trace(rho @ sig))
+        return sn/4
     else:
         p = int(np.log2(np.size(rho[0])))
         dim = 2**p
