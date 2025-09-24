@@ -90,7 +90,7 @@ def get_sn_general(rho, qubits):
             sn += abs(np.trace(rho @ sigma))
 
         # Normalize by (2^qubits - 1) to get threshold of 1
-        return sn / (2**qubits - 1)
+        return sn / (2**qubits-1)
 
 def generate_dataset(num_samples, qubits, lam, output_path=None, seed=None):
     """
