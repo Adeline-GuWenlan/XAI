@@ -5,8 +5,7 @@ from scipy import stats
 import os
 
 # Load the labels
-decoded_tokens_dir = "/Users/guwenlan/Desktop/XAI/MixMLP/Decoded_Tokens/"
-labels = np.load(os.path.join(decoded_tokens_dir, "2q_100000_states_labels.npy"))
+labels = np.load('Utils/Data/3q_100000_labels.npy')
 
 print("Label Distribution Analysis")
 print("=" * 40)
