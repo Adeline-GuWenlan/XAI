@@ -1,0 +1,304 @@
+# Quantum Magic Training Commands for Remote Server
+# Updated for new 500k 2-qubit dataset with improved decoder
+
+# =============================================================================
+# 2-QUBIT TRAINING COMMANDS (Updated data path for new dataset)
+# =============================================================================
+
+# 1. Basic 2-qubit training with optimized parameters
+tmux new -s "2q_baseline"
+python train_single.py \
+  --exp_name "2q_d128_h4_moe" \
+  --num_qubits 2 \
+  --d_model 128 \
+  --nhead 4 \
+  --pooling_type cls \
+  --mlp_type mixture_of_experts \
+  --use_physics_mask False \
+  --mask_threshold 1.0 \
+  --use_cls_token True \
+  --epochs 200 \
+  --lr 1e-4 \
+  --batch_size 512 \
+  --data_folder /home/gwl/MixMLP/Decoded_Tokens \
+  --labels_path /home/gwl/MixMLP/Decoded_Tokens/2q_100000_states_labels.npy \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --num_workers 4 \
+  --device auto \
+  --base_log_dir experiments \
+  --base_model_dir models
+
+# 2. Higher dimension test for 2-qubits
+tmux new -s "2q_high_dim"
+python train_single.py \
+  --exp_name "2q_d256_h8_moe_500k" \
+  --num_qubits 2 \
+  --d_model 256 \
+  --nhead 8 \
+  --pooling_type cls \
+  --mlp_type mixture_of_experts \
+  --use_physics_mask False \
+  --use_cls_token True \
+  --epochs 200 \
+  --lr 1e-4 \
+  --batch_size 512 \
+  --data_folder /home/gwl/MixMLP/Decoded_Tokens \
+  --labels_path /home/gwl/MixMLP/Decoded_Tokens/2q_500000_labels.npy \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --num_workers 4 \
+  --device auto
+
+# 3. Asymmetric ensemble test
+tmux new -s "2q_asymmetric"
+python train_single.py \
+  --exp_name "2q_d128_h4_asym_500k" \
+  --num_qubits 2 \
+  --d_model 128 \
+  --nhead 4 \
+  --pooling_type cls \
+  --mlp_type asymmetric_ensemble \
+  --use_physics_mask False \
+  --use_cls_token True \
+  --epochs 200 \
+  --lr 1e-4 \
+  --batch_size 512 \
+  --data_folder /home/gwl/MixMLP/Decoded_Tokens \
+  --labels_path /home/gwl/MixMLP/Decoded_Tokens/2q_500000_labels.npy \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --num_workers 4 \
+  --device auto
+
+# =============================================================================
+# 3-QUBIT TRAINING COMMANDS (Based on previous successful configurations)
+# =============================================================================
+
+# 4. Best performing 3-qubit configuration from previous results
+tmux new -s "3q_best_config"
+python train_single.py \
+  --exp_name "3q_d512_h4_moe_new" \
+  --num_qubits 3 \
+  --d_model 512 \
+  --nhead 4 \
+  --pooling_type cls \
+  --mlp_type mixture_of_experts \
+  --use_physics_mask False \
+  --mask_threshold 1.0 \
+  --use_cls_token True \
+  --epochs 100 \
+  --lr 1e-4 \
+  --batch_size 512 \
+  --data_folder Decoded_Tokens \
+  --labels_path Label/magic_labels_for_input_for_3_qubits_mixed_10000_datapoints.npy \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --num_workers 4 \
+  --device auto
+
+# 5. High-dimension 3-qubit training
+tmux new -s "3q_high_dim"
+python train_single.py \
+  --exp_name "3q_d1024_h8_moe_new" \
+  --num_qubits 3 \
+  --d_model 1024 \
+  --nhead 8 \
+  --pooling_type cls \
+  --mlp_type mixture_of_experts \
+  --use_physics_mask False \
+  --use_cls_token True \
+  --epochs 100 \
+  --lr 1e-4 \
+  --batch_size 512 \
+  --data_folder Decoded_Tokens \
+  --labels_path Label/magic_labels_for_input_for_3_qubits_mixed_10000_datapoints.npy \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --num_workers 4 \
+  --device auto
+
+# 6. Ultra-high dimension test (previous best R²=0.8425)
+tmux new -s "3q_ultra_dim"
+python train_single.py \
+  --exp_name "3q_d2048_h4_moe_new" \
+  --num_qubits 3 \
+  --d_model 2048 \
+  --nhead 4 \
+  --pooling_type cls \
+  --mlp_type mixture_of_experts \
+  --use_physics_mask False \
+  --use_cls_token True \
+  --epochs 100 \
+  --lr 1e-4 \
+  --batch_size 256 \
+  --data_folder Decoded_Tokens \
+  --labels_path Label/magic_labels_for_input_for_3_qubits_mixed_10000_datapoints.npy \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --num_workers 4 \
+  --device auto
+
+# =============================================================================
+# EXPERIMENT VARIATIONS
+# =============================================================================
+
+# 7. Physics-aware attention test
+tmux new -s "physics_attention"
+python train_single.py \
+  --exp_name "2q_d128_physics_attn_500k" \
+  --num_qubits 2 \
+  --d_model 128 \
+  --nhead 4 \
+  --pooling_type attention \
+  --mlp_type attention_enhanced \
+  --use_physics_mask True \
+  --mask_threshold 1.0 \
+  --use_cls_token True \
+  --epochs 200 \
+  --lr 1e-4 \
+  --batch_size 512 \
+  --data_folder /home/gwl/MixMLP/Decoded_Tokens \
+  --labels_path /home/gwl/MixMLP/Decoded_Tokens/2q_500000_labels.npy \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --num_workers 4 \
+  --device auto
+
+# 8. Standard MLP comparison
+tmux new -s "standard_mlp"
+python train_single.py \
+  --exp_name "2q_d128_h4_std_500k" \
+  --num_qubits 2 \
+  --d_model 128 \
+  --nhead 4 \
+  --pooling_type cls \
+  --mlp_type standard \
+  --use_physics_mask False \
+  --use_cls_token True \
+  --epochs 200 \
+  --lr 1e-4 \
+  --batch_size 512 \
+  --data_folder /home/gwl/MixMLP/Decoded_Tokens \
+  --labels_path /home/gwl/MixMLP/Decoded_Tokens/2q_500000_labels.npy \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --num_workers 4 \
+  --device auto
+
+# =============================================================================
+# 4-QUBIT TRAINING COMMANDS (Based on previous successful configurations)
+# =============================================================================
+
+# 1. Basic 4-qubit training with recommended parameters
+tmux new -s "4q_baseline"
+python train_single.py \
+  --exp_name "4q_d2048_h8_moe" \
+  --num_qubits 4 \
+  --d_model 2048 \
+  --nhead 8 \
+  --pooling_type cls \
+  --mlp_type mixture_of_experts \
+  --use_physics_mask False \
+  --mask_threshold 1.0 \
+  --use_cls_token True \
+  --epochs 100 \
+  --lr 1e-4 \
+  --batch_size 256 \
+  --data_folder Decoded_Tokens \
+  --labels_path Decoded_Tokens/magic_labels_for_input_for_4_qubits_mixed_1_50000_datapoints.npy \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --num_workers 4 \
+  --device auto \
+  --base_log_dir experiments \
+  --base_model_dir models
+
+# 2. Alternative 4-qubit training with higher attention heads
+tmux new -s "4q_high_attention"
+python train_single.py \
+  --exp_name "4q_d2048_h16_moe" \
+  --num_qubits 4 \
+  --d_model 2048 \
+  --nhead 16 \
+  --pooling_type cls \
+  --mlp_type mixture_of_experts \
+  --use_physics_mask False \
+  --mask_threshold 1.0 \
+  --use_cls_token True \
+  --epochs 100 \
+  --lr 1e-4 \
+  --batch_size 256 \
+  --data_folder Decoded_Tokens \
+  --labels_path Decoded_Tokens/magic_labels_for_input_for_4_qubits_mixed_1_50000_datapoints.npy \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --num_workers 4 \
+  --device auto \
+  --base_log_dir experiments \
+  --base_model_dir models
+
+# 3. 4-qubit training with 6 encoder layers (alternative configuration)
+tmux new -s "4q_deep_encoder"
+python train_single.py \
+  --exp_name "4q_d2048_h8_moe_6layers" \
+  --num_qubits 4 \
+  --d_model 2048 \
+  --nhead 8 \
+  --pooling_type cls \
+  --mlp_type mixture_of_experts \
+  --use_physics_mask False \
+  --mask_threshold 1.0 \
+  --use_cls_token True \
+  --epochs 100 \
+  --lr 1e-4 \
+  --batch_size 256 \
+  --num_encoder_layers 6 \
+  --data_folder Decoded_Tokens \
+  --labels_path Decoded_Tokens/magic_labels_for_input_for_4_qubits_mixed_1_50000_datapoints.npy \
+  --train_ratio 0.8 \
+  --val_ratio 0.1 \
+  --num_workers 4 \
+  --device auto \
+  --base_log_dir experiments \
+  --base_model_dir models
+
+# =============================================================================
+# DUMMY TEST COMMANDS (For local testing before remote execution)
+# =============================================================================
+
+# 9. Local dummy test
+tmux new -s "dummy_test"
+python train_single.py \
+  --exp_name "dummy_test_local" \
+  --num_qubits 4 \
+  --d_model 2048 \
+  --nhead 4 \
+  --pooling_type cls \
+  --mlp_type standard \
+  --epochs 1 \
+  --lr 1e-3 \
+  --batch_size 8 \
+  --dummy_test \
+  --dummy_samples 32 \
+  --device auto
+
+# =============================================================================
+# USAGE INSTRUCTIONS
+# =============================================================================
+# 1. SSH to remote server: ssh gwl@172.16.51.235
+# 2. Navigate to project: cd /home/gwl/MixMLP
+# 3. Activate environment: conda activate magic (or appropriate env)
+# 4. Copy and paste the desired command (including tmux session creation)
+# 5. Monitor with: tmux list-sessions
+# 6. Attach to session: tmux attach -t session_name
+# 7. Detach from session: Ctrl+B, then D
+
+# =============================================================================
+# MONITORING COMMANDS
+# =============================================================================
+# List all tmux sessions: tmux list-sessions
+# Attach to session: tmux attach -t session_name
+# Kill session: tmux kill-session -t session_name
+# View GPU usage: nvidia-smi
+# View running processes: ps aux | grep python
