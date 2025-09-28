@@ -559,7 +559,6 @@ def main():
     print(f"🔧 Configuration:")
     print(f"   Qubits: {args.num_qubits}")
     print(f"   d_model: {args.d_model}")
-    print(f"   Physics mask: {args.use_physics_mask}")
     print(f"   Pooling: {args.pooling_type}")
     print(f"   MLP: {args.mlp_type}")
     print(f"   Device: {device}")

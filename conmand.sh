@@ -1,5 +1,14 @@
 conmand.sh
 
+python /Users/guwenlan/Desktop/XAI/Utils/larger_generation.py --num 1000 --qubits 3 --lam 1.1 --output /Users/guwenlan/Desktop/XAI/Utils/Data
+
+
+
+
+
+
+
+
 
 python visualizations/Visualization.py\
  --model_path CONFIGs/2_128_cls_moe_20250817_202509/best_2_128_cls_moe_20250817_202509.pth\
