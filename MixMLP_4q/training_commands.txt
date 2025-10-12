@@ -202,7 +202,7 @@ python train_single.py \
   --use_cls_token True \
   --epochs 100 \
   --lr 1e-4 \
-  --batch_size 128 \
+  --batch_size 32 \
   --data_folder Decoded_Tokens \
   --labels_path Decoded_Tokens/magic_labels_for_input_for_4_qubits_mixed_1_50000_datapoints.npy \
   --train_ratio 0.8 \

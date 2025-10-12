@@ -1,12 +1,6 @@
-import os
-import numpy as np
 import torch
 import torch.nn as nn
-from tqdm import tqdm
-from typing import Optional, Tuple
-import torch
 import torch.nn.functional as F
-import math
 # for 4 qubits: dmodel = 2048
 class QuantumMagicMLPv2(nn.Module):
     """
@@ -17,58 +11,25 @@ class QuantumMagicMLPv2(nn.Module):
         self.d_model = d_model
         self.mlp_type = mlp_type
         self.n_qubits = n_qubits
-        
+
         # Input processing
         self.input_norm = nn.LayerNorm(d_model)
-        
-        if mlp_type == "physics_aware":
-            self.mlp_head = self._build_physics_aware_mlp(d_model, dropout_rate)
-        elif mlp_type == "attention_enhanced":
+
+
+        if mlp_type == "attention_enhanced":
             self.mlp_head = self._build_attention_mlp(d_model, dropout_rate)
         elif mlp_type == "mixture_of_experts":
             self.mlp_head = self._build_moe_mlp(d_model, dropout_rate)
         elif mlp_type == "asymmetric_ensemble":
             self.mlp_head = self._build_asymmetric_ensemble(d_model, dropout_rate)
             self.ensemble_weights = nn.Parameter(torch.ones(3) / 3)
+        elif mlp_type == "asymmetric_ensemble_v2":
+            # High-dimensional 5-pathway ensemble
+            self.mlp_head = self._build_asymmetric_ensemble_v2(d_model, dropout_rate)
+            self.ensemble_weights = nn.Parameter(torch.ones(5) / 5)
         else:  # "standard"
             self.mlp_head = self._build_standard_mlp(d_model, dropout_rate)
     
-    def _build_physics_aware_mlp(self, d_model, dropout_rate):
-        """Physics-aware MLP that processes features based on quantum structure"""
-        return nn.ModuleDict({
-            # Separate pathways for different physics aspects
-            'eigenvalue_pathway': nn.Sequential(
-                nn.Linear(d_model, 128),
-                nn.GELU(),
-                nn.LayerNorm(128),
-                nn.Dropout(dropout_rate),
-                nn.Linear(128, 64)
-            ),
-            'coherence_pathway': nn.Sequential(
-                nn.Linear(d_model, 128), 
-                nn.GELU(),
-                nn.LayerNorm(128),
-                nn.Dropout(dropout_rate),
-                nn.Linear(128, 64)
-            ),
-            'entanglement_pathway': nn.Sequential(
-                nn.Linear(d_model, 64),
-                nn.GELU(),
-                nn.LayerNorm(64),
-                nn.Dropout(dropout_rate * 0.5),
-                nn.Linear(64, 32)
-            ),
-            # Combine pathways
-            'fusion': nn.Sequential(
-                nn.Linear(64 + 64 + 32, 64),  # Concatenated features
-                nn.GELU(),
-                nn.LayerNorm(64),
-                nn.Dropout(dropout_rate * 0.5),
-                nn.Linear(64, 32),
-                nn.GELU(),
-                nn.Linear(32, 1)
-            )
-        })
     
     def _build_attention_mlp(self, d_model, dropout_rate):
         """MLP with self-attention on intermediate features"""
@@ -100,12 +61,12 @@ class QuantumMagicMLPv2(nn.Module):
         """Mixture of Experts MLP for different magic detection strategies"""
         # set the num of experts / after gating dim dedicated for 4 qubits case
         # in proportion with qubits = 3, experts = 3, d_model = 512, after gating = 64
-        num_experts = 8
+        num_experts = 4
         return nn.ModuleDict({
             'gating_network': nn.Sequential(
-                nn.Linear(d_model, 256),
+                nn.Linear(d_model, 1024),
                 nn.GELU(),
-                nn.Linear(256, num_experts),
+                nn.Linear(1024, num_experts),
                 nn.Softmax(dim=-1)
             ),
             'experts': nn.ModuleList([
@@ -164,6 +125,100 @@ class QuantumMagicMLPv2(nn.Module):
                 nn.Linear(32, 1)
             )
         })
+
+    def _build_asymmetric_ensemble_v2(self, d_model, dropout_rate):
+        """
+        Asymmetric ensemble for high-dimensional inputs (d_model >= 1024)
+        Designed for d_model=2048 with 5 pathways reducing to (1024, 512, 256, 128, 64)
+        """
+        return nn.ModuleDict({
+            # Pathway 1: 2048 -> 1024 -> 512 -> 256 -> 128 -> 64 -> 32 -> 1 (deepest)
+            'pathway_1024': nn.Sequential(
+                nn.Linear(d_model, 1024),
+                nn.GELU(),
+                nn.LayerNorm(1024),
+                nn.Dropout(dropout_rate),
+
+                nn.Linear(1024, 512),
+                nn.GELU(),
+                nn.LayerNorm(512),
+                nn.Dropout(dropout_rate),
+
+                nn.Linear(512, 256),
+                nn.GELU(),
+                nn.LayerNorm(256),
+                nn.Dropout(dropout_rate),
+
+                nn.Linear(256, 128),
+                nn.GELU(),
+                nn.LayerNorm(128),
+                nn.Dropout(dropout_rate),
+
+                nn.Linear(128, 64),
+                nn.GELU(),
+                nn.Linear(64, 32),
+                nn.GELU(),
+                nn.Linear(32, 1)
+            ),
+
+            # Pathway 2: 2048 -> 512 -> 256 -> 128 -> 64 -> 1 (deep)
+            'pathway_512': nn.Sequential(
+                nn.Linear(d_model, 512),
+                nn.GELU(),
+                nn.LayerNorm(512),
+                nn.Dropout(dropout_rate),
+
+                nn.Linear(512, 256),
+                nn.GELU(),
+                nn.LayerNorm(256),
+                nn.Dropout(dropout_rate),
+
+                nn.Linear(256, 128),
+                nn.GELU(),
+                nn.LayerNorm(128),
+                nn.Dropout(dropout_rate),
+
+                nn.Linear(128, 64),
+                nn.GELU(),
+                nn.Linear(64, 1)
+            ),
+
+            # Pathway 3: 2048 -> 256 -> 128 -> 64 -> 1 (medium)
+            'pathway_256': nn.Sequential(
+                nn.Linear(d_model, 256),
+                nn.GELU(),
+                nn.LayerNorm(256),
+                nn.Dropout(dropout_rate),
+
+                nn.Linear(256, 128),
+                nn.GELU(),
+                nn.LayerNorm(128),
+                nn.Dropout(dropout_rate),
+
+                nn.Linear(128, 64),
+                nn.GELU(),
+                nn.Linear(64, 1)
+            ),
+
+            # Pathway 4: 2048 -> 128 -> 64 -> 1 (shallow)
+            'pathway_128': nn.Sequential(
+                nn.Linear(d_model, 128),
+                nn.GELU(),
+                nn.LayerNorm(128),
+                nn.Dropout(dropout_rate),
+
+                nn.Linear(128, 64),
+                nn.GELU(),
+                nn.Linear(64, 1)
+            ),
+
+            # Pathway 5: 2048 -> 64 -> 1 (shallowest)
+            'pathway_64': nn.Sequential(
+                nn.Linear(d_model, 64),
+                nn.GELU(),
+                nn.Linear(64, 1)
+            )
+        })
     
     def _build_standard_mlp(self, d_model, dropout_rate):
         """Standard progressive MLP (your current approach)"""
@@ -188,7 +243,7 @@ class QuantumMagicMLPv2(nn.Module):
     def forward(self, transformer_features):
         """Forward pass with different MLP architectures"""
         x = self.input_norm(transformer_features)
-        
+
         if self.mlp_type == "physics_aware":
             return self._forward_physics_aware(x)
         elif self.mlp_type == "attention_enhanced":
@@ -197,6 +252,8 @@ class QuantumMagicMLPv2(nn.Module):
             return self._forward_moe(x)
         elif self.mlp_type == "asymmetric_ensemble":
             return self._forward_asymmetric(x)
+        elif self.mlp_type == "asymmetric_ensemble_v2":
+            return self._forward_asymmetric_v2(x)
         else:  # standard
             return self.mlp_head(x)
     
@@ -248,17 +305,41 @@ class QuantumMagicMLPv2(nn.Module):
         """Asymmetric ensemble forward pass"""
         # Get outputs from different pathways
         deep_out = self.mlp_head['deep_pathway'](x)
-        shallow_out = self.mlp_head['shallow_pathway'](x)  
+        shallow_out = self.mlp_head['shallow_pathway'](x)
         medium_out = self.mlp_head['medium_pathway'](x)
-        
+
         # Learnable ensemble weights
         weights = F.softmax(self.ensemble_weights, dim=0)
-        
+
         # Weighted combination
-        output = (weights[0] * deep_out + 
-                 weights[1] * shallow_out + 
+        output = (weights[0] * deep_out +
+                 weights[1] * shallow_out +
                  weights[2] * medium_out)
-        
+
+        return output
+
+    def _forward_asymmetric_v2(self, x):
+        """
+        Asymmetric ensemble forward pass for 5-pathway architecture
+        For high-dimensional inputs (d_model >= 1024)
+        """
+        # Get outputs from all 5 pathways
+        out_1024 = self.mlp_head['pathway_1024'](x)  # Deepest
+        out_512 = self.mlp_head['pathway_512'](x)    # Deep
+        out_256 = self.mlp_head['pathway_256'](x)    # Medium
+        out_128 = self.mlp_head['pathway_128'](x)    # Shallow
+        out_64 = self.mlp_head['pathway_64'](x)      # Shallowest
+
+        # Learnable ensemble weights (5 pathways)
+        weights = F.softmax(self.ensemble_weights, dim=0)
+
+        # Weighted combination
+        output = (weights[0] * out_1024 +
+                 weights[1] * out_512 +
+                 weights[2] * out_256 +
+                 weights[3] * out_128 +
+                 weights[4] * out_64)
+
         return output
 '''
 

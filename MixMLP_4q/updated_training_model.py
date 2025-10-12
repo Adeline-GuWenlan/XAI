@@ -7,6 +7,10 @@ from mlp import QuantumMagicMLPv2
 
 class CompleteQuantumMagicPredictor(nn.Module):
     """Complete pipeline: embedding → transformer → physics pooling → MLP"""
+    # TODO: Review and ensure all required parameters for component layers are exposed at model level
+    # TODO: Ensure parameter consistency between __init__ signature and component initialization
+    # TODO: Check that parameters like dropout_rate, num_layers, etc. are properly exposed
+
     def __init__(self, matrix_dim=None, n_qubits=2, d_model=64,
                  pooling_type="cls", mlp_type="standard",
                  nhead=8, use_cls_token=True):
@@ -14,18 +18,18 @@ class CompleteQuantumMagicPredictor(nn.Module):
         # Auto-calculate matrix_dim from n_qubits if not provided
         if matrix_dim is None:
             matrix_dim = 2 ** n_qubits
-        
+
         self.matrix_dim = matrix_dim
         self.n_qubits = n_qubits
         self.d_model = d_model
         self.pooling_type = pooling_type
         self.nhead = nhead
         self.use_cls_token = use_cls_token
-        
+
         # Force consistency: if pooling_type is "cls", we need CLS token
         if pooling_type == "cls":
             self.use_cls_token = True
-        
+
         # Components
         self.embedding = StructuredQuantumEmbedding(n_qubits, d_model)
         
@@ -87,17 +91,20 @@ class CompleteQuantumMagicPredictor(nn.Module):
 
 class PhysicsAwarePooling(nn.Module):
     """Physics-aware pooling for quantum density matrices"""
-    
+    # TODO: Downgrade this class to just attention-based pooling
+    # TODO: Remove all "structured" pooling logic - we won't use it anymore
+
     def __init__(self, d_model: int, matrix_dim: int, pooling_type: str = "structured"):
         super().__init__()
         self.d_model = d_model
         self.matrix_dim = matrix_dim
         self.pooling_type = pooling_type
-        
+
         if pooling_type == "attention":
             self.attention_weights = nn.Linear(d_model, 1)
-            
+
         elif pooling_type == "structured":
+            # TODO: DELETE THIS ENTIRE BRANCH - structured pooling is deprecated
             # Separate processing for diagonal vs off-diagonal
             self.diag_pooling = nn.Linear(d_model, d_model // 2)
             self.offdiag_pooling = nn.Linear(d_model, d_model // 2)
@@ -135,32 +142,33 @@ class PhysicsAwarePooling(nn.Module):
             return (matrix_tokens * attn_weights).sum(dim=1)
             
         elif self.pooling_type == "structured":
+            # TODO: DELETE THIS ENTIRE BRANCH - structured pooling is deprecated
             # Physics-aware: separate diagonal from off-diagonal
             actual_matrix_tokens = matrix_tokens.size(1)
             expected_tokens = D * D
-            
+
             if actual_matrix_tokens != expected_tokens:
                 print(f"⚠️ Matrix token count mismatch: got {actual_matrix_tokens}, expected {expected_tokens}")
                 # Use available tokens
                 available_D = int(actual_matrix_tokens ** 0.5)
                 D = available_D
-            
+
             diag_indices = torch.arange(D, device=x.device) * (D + 1)
-            
+
             all_indices = torch.arange(actual_matrix_tokens, device=x.device)
             diag_mask = torch.isin(all_indices, diag_indices)
             offdiag_mask = ~diag_mask
-            
+
             # Separate elements
             diag_elements = matrix_tokens[:, diag_mask, :]     # [B, D, d_model]
             offdiag_elements = matrix_tokens[:, offdiag_mask, :] # [B, D²-D, d_model]
-            
+
             # Process separately then combine
             diag_pooled = self.diag_pooling(diag_elements.mean(dim=1))
             offdiag_pooled = self.offdiag_pooling(offdiag_elements.mean(dim=1))
-            
+
             combined = torch.cat([diag_pooled, offdiag_pooled], dim=1)
             return self.combine(combined)
-        
+
         else:
             raise ValueError(f"Unknown pooling type: {self.pooling_type}")
