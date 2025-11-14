@@ -12,17 +12,18 @@ import os
 import json
 from datetime import datetime
 import matplotlib.pyplot as plt
+from scipy.stats import spearmanr, pearsonr
 
 # Set random seeds for reproducibility
 torch.manual_seed(42)
 np.random.seed(42)
 
 # Paths
-DATA_DIR = "/Users/guwenlan/Desktop/XAI/INSPECT/Data"
+DATA_DIR = "Full_Ori/2q"
 
 # Dataset paths - Updated to 50000 samples
-X_PATH = os.path.join(DATA_DIR, "2q_50000samples_poisson_lam1.1_20251111_180142_pauli_vectors.npy")
-Y_PATH = os.path.join(DATA_DIR, "2q_50000samples_poisson_lam1.1_20251111_180142_sn_labels.npy")
+X_PATH = os.path.join(DATA_DIR, "2q_100000samples_uniform_20251114_194912_pauli_vectors.npy")
+Y_PATH = os.path.join(DATA_DIR, "2q_100000samples_uniform_20251114_194912_sn_labels.npy")
 
 
 class QuantumDataset(Dataset):
@@ -30,13 +31,6 @@ class QuantumDataset(Dataset):
     def __init__(self, X_path, Y_path):
         self.X = torch.from_numpy(np.load(X_path)).float()
         self.Y = torch.from_numpy(np.load(Y_path)).float()
-
-        # Reshape Y if necessary
-        if len(self.Y.shape) == 1:
-            self.Y = self.Y.unsqueeze(1)
-
-        print(f"Loaded data: X shape={self.X.shape}, Y shape={self.Y.shape}")
-
     def __len__(self):
         return len(self.X)
 
@@ -87,10 +81,12 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
 
 
 def evaluate(model, dataloader, criterion, device):
-    """Evaluate the model"""
+    """Evaluate the model with comprehensive metrics"""
     model.eval()
     total_loss = 0
     num_batches = 0
+    all_predictions = []
+    all_targets = []
 
     with torch.no_grad():
         for X_batch, Y_batch in dataloader:
@@ -102,7 +98,38 @@ def evaluate(model, dataloader, criterion, device):
             total_loss += loss.item()
             num_batches += 1
 
-    return total_loss / num_batches
+            # Collect predictions and targets for correlation metrics
+            all_predictions.append(predictions.cpu().numpy())
+            all_targets.append(Y_batch.cpu().numpy())
+
+    # Concatenate all predictions and targets
+    all_predictions = np.concatenate(all_predictions, axis=0).flatten()
+    all_targets = np.concatenate(all_targets, axis=0).flatten()
+
+    # Compute metrics
+    mse = total_loss / num_batches
+
+    # R-squared
+    ss_res = np.sum((all_targets - all_predictions) ** 2)
+    ss_tot = np.sum((all_targets - np.mean(all_targets)) ** 2)
+    r_squared = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
+
+    # Spearman correlation
+    spearman_corr, spearman_pval = spearmanr(all_predictions, all_targets)
+
+    # Pearson correlation
+    pearson_corr, pearson_pval = pearsonr(all_predictions, all_targets)
+
+    metrics = {
+        'mse': mse,
+        'r_squared': r_squared,
+        'spearman': spearman_corr,
+        'spearman_pval': spearman_pval,
+        'pearson': pearson_corr,
+        'pearson_pval': pearson_pval
+    }
+
+    return metrics
 
 
 def main():
@@ -165,44 +192,91 @@ def main():
     # Open epoch log file
     epoch_log_path = os.path.join(RESULTS_DIR, "epoch_log.txt")
     with open(epoch_log_path, 'w') as epoch_log:
-        epoch_log.write("Epoch\tTrain_Loss\tVal_Loss\n")
+        epoch_log.write("Epoch\tTrain_Loss\tVal_MSE\tVal_R2\tVal_Spearman\tVal_Pearson\n")
 
         train_losses = []
-        val_losses = []
+        val_metrics_history = {
+            'mse': [],
+            'r_squared': [],
+            'spearman': [],
+            'pearson': []
+        }
         best_val_loss = float('inf')
 
         for epoch in range(NUM_EPOCHS):
             train_loss = train_epoch(model, train_loader, criterion, optimizer, device)
-            val_loss = evaluate(model, val_loader, criterion, device)
+            val_metrics = evaluate(model, val_loader, criterion, device)
 
             train_losses.append(train_loss)
-            val_losses.append(val_loss)
+            val_metrics_history['mse'].append(val_metrics['mse'])
+            val_metrics_history['r_squared'].append(val_metrics['r_squared'])
+            val_metrics_history['spearman'].append(val_metrics['spearman'])
+            val_metrics_history['pearson'].append(val_metrics['pearson'])
 
             # Log each epoch to file
-            epoch_log.write(f"{epoch+1}\t{train_loss:.6f}\t{val_loss:.6f}\n")
+            epoch_log.write(f"{epoch+1}\t{train_loss:.6f}\t{val_metrics['mse']:.6f}\t"
+                          f"{val_metrics['r_squared']:.6f}\t{val_metrics['spearman']:.6f}\t"
+                          f"{val_metrics['pearson']:.6f}\n")
             epoch_log.flush()  # Ensure it's written immediately
 
             # Print to console
-            print(f"Epoch {epoch+1:3d}/{NUM_EPOCHS}: Train Loss = {train_loss:.6f}, Val Loss = {val_loss:.6f}")
+            print(f"Epoch {epoch+1:3d}/{NUM_EPOCHS}: Train Loss = {train_loss:.6f}, "
+                  f"Val MSE = {val_metrics['mse']:.6f}, R² = {val_metrics['r_squared']:.4f}, "
+                  f"Spearman = {val_metrics['spearman']:.4f}, Pearson = {val_metrics['pearson']:.4f}")
 
             # Save best model
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
+            if val_metrics['mse'] < best_val_loss:
+                best_val_loss = val_metrics['mse']
                 torch.save(model.state_dict(), os.path.join(RESULTS_DIR, "best_model.pt"))
 
     print("=" * 80)
     print(f"\nTraining completed! Best validation loss: {best_val_loss:.6f}")
     print(f"Epoch log saved to: {epoch_log_path}")
 
-    # Plot training curves
-    plt.figure(figsize=(10, 6))
-    plt.plot(train_losses, label='Train Loss')
-    plt.plot(val_losses, label='Validation Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('MSE Loss')
-    plt.title('Model 4: MLP with ReLU + ReLU - Training Curves')
-    plt.legend()
-    plt.grid(True)
+    # Plot training curves with multiple subplots
+    fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+
+    # Plot 1: MSE Loss
+    axes[0, 0].plot(train_losses, label='Train MSE', color='blue')
+    axes[0, 0].plot(val_metrics_history['mse'], label='Val MSE', color='red')
+    axes[0, 0].set_xlabel('Epoch')
+    axes[0, 0].set_ylabel('MSE Loss')
+    axes[0, 0].set_title('MSE Loss Curves')
+    axes[0, 0].legend()
+    axes[0, 0].grid(True)
+
+    # Plot 2: R-squared
+    axes[0, 1].plot(val_metrics_history['r_squared'], label='R²', color='green')
+    axes[0, 1].set_xlabel('Epoch')
+    axes[0, 1].set_ylabel('R² Score')
+    axes[0, 1].set_title('R² Score Over Training')
+    axes[0, 1].legend()
+    axes[0, 1].grid(True)
+    axes[0, 1].axhline(y=0, color='gray', linestyle='--', alpha=0.5)
+    axes[0, 1].axhline(y=1, color='gray', linestyle='--', alpha=0.5)
+
+    # Plot 3: Spearman Correlation
+    axes[1, 0].plot(val_metrics_history['spearman'], label='Spearman ρ', color='purple')
+    axes[1, 0].set_xlabel('Epoch')
+    axes[1, 0].set_ylabel('Spearman Correlation')
+    axes[1, 0].set_title('Spearman Rank Correlation Over Training')
+    axes[1, 0].legend()
+    axes[1, 0].grid(True)
+    axes[1, 0].axhline(y=0, color='gray', linestyle='--', alpha=0.5)
+    axes[1, 0].axhline(y=1, color='gray', linestyle='--', alpha=0.5)
+
+    # Plot 4: Pearson Correlation
+    axes[1, 1].plot(val_metrics_history['pearson'], label='Pearson r', color='orange')
+    axes[1, 1].set_xlabel('Epoch')
+    axes[1, 1].set_ylabel('Pearson Correlation')
+    axes[1, 1].set_title('Pearson Correlation Over Training')
+    axes[1, 1].legend()
+    axes[1, 1].grid(True)
+    axes[1, 1].axhline(y=0, color='gray', linestyle='--', alpha=0.5)
+    axes[1, 1].axhline(y=1, color='gray', linestyle='--', alpha=0.5)
+
+    plt.suptitle('Model 4: MLP with ReLU + ReLU - Training Metrics', fontsize=16, y=0.995)
+    plt.tight_layout()
     plt.savefig(os.path.join(RESULTS_DIR, "training_curves.png"), dpi=150, bbox_inches='tight')
     print(f"Training curves saved to {os.path.join(RESULTS_DIR, 'training_curves.png')}")
 
@@ -227,9 +301,12 @@ def main():
             "val_samples": val_size
         },
         "results": {
-            "final_train_loss": float(train_losses[-1]),
-            "final_val_loss": float(val_losses[-1]),
-            "best_val_loss": float(best_val_loss)
+            "final_train_mse": float(train_losses[-1]),
+            "final_val_mse": float(val_metrics_history['mse'][-1]),
+            "final_val_r_squared": float(val_metrics_history['r_squared'][-1]),
+            "final_val_spearman": float(val_metrics_history['spearman'][-1]),
+            "final_val_pearson": float(val_metrics_history['pearson'][-1]),
+            "best_val_mse": float(best_val_loss)
         }
     }
 
@@ -291,14 +368,19 @@ Model Architecture:
 - Total parameters: {model_params['total_parameters']}
 
 Results:
-- Final training loss (MSE): {train_losses[-1]:.6f}
-- Final validation loss (MSE): {val_losses[-1]:.6f}
-- Best validation loss (MSE): {best_val_loss:.6f}
+- Final training MSE: {train_losses[-1]:.6f}
+- Final validation MSE: {val_metrics_history['mse'][-1]:.6f}
+- Best validation MSE: {best_val_loss:.6f}
+
+Evaluation Metrics (Final Epoch):
+- R² Score: {val_metrics_history['r_squared'][-1]:.6f}
+- Spearman Correlation: {val_metrics_history['spearman'][-1]:.6f}
+- Pearson Correlation: {val_metrics_history['pearson'][-1]:.6f}
 
 Files saved:
 - best_model.pt: Best model checkpoint
 - final_model.pt: Final model after all epochs
-- training_curves.png: Loss curves visualization
+- training_curves.png: Comprehensive metrics visualization
 - training_log.json: Detailed training log
 - model_parameters.json: Model parameters summary
 - epoch_log.txt: Per-epoch training log
