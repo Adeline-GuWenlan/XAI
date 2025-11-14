@@ -1,0 +1,25 @@
+{
+    "model": "MLP with Absolute Value Activation + ReLU",
+    "timestamp": "20251111_182735",
+    "device": "mps",
+    "hyperparameters": {
+        "batch_size": 32,
+        "learning_rate": 0.001,
+        "num_epochs": 50,
+        "train_split": 0.8,
+        "hidden_dim": 64,
+        "dropout_rate": 0.2
+    },
+    "data": {
+        "X_path": "/Users/guwenlan/Desktop/XAI/INSPECT/Data/2q_50000samples_poisson_lam1.1_20251111_180142_pauli_vectors.npy",
+        "Y_path": "/Users/guwenlan/Desktop/XAI/INSPECT/Data/2q_50000samples_poisson_lam1.1_20251111_180142_sn_labels.npy",
+        "input_dim": 16,
+        "train_samples": 40000,
+        "val_samples": 10000
+    },
+    "results": {
+        "final_train_loss": 0.0012095171998720616,
+        "final_val_loss": 0.00022063542448635848,
+        "best_val_loss": 9.307506161203723e-05
+    }
+}

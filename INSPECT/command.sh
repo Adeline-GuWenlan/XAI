@@ -1,0 +1,2 @@
+python '/Users/guwenlan/Desktop/INSPECT/DataGeneration/RoM_label/RoM_poisson.py' --num 200 --qubits 2 --lam 1.5 --output '/Users/guwenlan/Desktop/INSPECT/Data' --seed 114514
+python '/Users/guwenlan/Desktop/INSPECT/DataGeneration/RoM_label/RoM_poisson.py' --num 1000 --qubits 2 --lam 31 --output '/Users/guwenlan/Desktop/INSPECT/Data' --seed 114514

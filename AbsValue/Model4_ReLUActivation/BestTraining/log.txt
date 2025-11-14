@@ -1,0 +1,274 @@
+python '/Users/guwenlan/Desktop/XAI/AbsValue/Model4_ReLUActivation/train_model4.py'
+Results will be saved to: ./results_20251111_182817
+Using device: MPS (Apple Silicon GPU)
+Loading dataset...
+Loaded data: X shape=torch.Size([50000, 16]), Y shape=torch.Size([50000, 1])
+Train samples: 40000, Validation samples: 10000
+
+Model Architecture:
+MLPReLUActivation(
+  (model): Sequential(
+    (0): Linear(in_features=16, out_features=64, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=64, out_features=64, bias=True)
+    (3): ReLU()
+    (4): Dropout(p=0.0, inplace=False)
+    (5): Linear(in_features=64, out_features=1, bias=True)
+  )
+)
+
+Total parameters: 5313
+
+Starting training...
+================================================================================
+Epoch   1/200: Train Loss = 0.031780, Val Loss = 0.007001
+Epoch   2/200: Train Loss = 0.006190, Val Loss = 0.006064
+Epoch   3/200: Train Loss = 0.005486, Val Loss = 0.005254
+Epoch   4/200: Train Loss = 0.004680, Val Loss = 0.004284
+Epoch   5/200: Train Loss = 0.003359, Val Loss = 0.002848
+Epoch   6/200: Train Loss = 0.002145, Val Loss = 0.001735
+Epoch   7/200: Train Loss = 0.001151, Val Loss = 0.000779
+Epoch   8/200: Train Loss = 0.000598, Val Loss = 0.000529
+Epoch   9/200: Train Loss = 0.000341, Val Loss = 0.000248
+Epoch  10/200: Train Loss = 0.000205, Val Loss = 0.000170
+Epoch  11/200: Train Loss = 0.000131, Val Loss = 0.000080
+Epoch  12/200: Train Loss = 0.000103, Val Loss = 0.000055
+Epoch  13/200: Train Loss = 0.000066, Val Loss = 0.000122
+Epoch  14/200: Train Loss = 0.000061, Val Loss = 0.000105
+Epoch  15/200: Train Loss = 0.000052, Val Loss = 0.000039
+Epoch  16/200: Train Loss = 0.000051, Val Loss = 0.000027
+Epoch  17/200: Train Loss = 0.000041, Val Loss = 0.000035
+Epoch  18/200: Train Loss = 0.000035, Val Loss = 0.000068
+Epoch  19/200: Train Loss = 0.000035, Val Loss = 0.000010
+Epoch  20/200: Train Loss = 0.000043, Val Loss = 0.000055
+Epoch  21/200: Train Loss = 0.000028, Val Loss = 0.000032
+Epoch  22/200: Train Loss = 0.000032, Val Loss = 0.000048
+Epoch  23/200: Train Loss = 0.000029, Val Loss = 0.000056
+Epoch  24/200: Train Loss = 0.000027, Val Loss = 0.000014
+Epoch  25/200: Train Loss = 0.000036, Val Loss = 0.000005
+Epoch  26/200: Train Loss = 0.000028, Val Loss = 0.000019
+Epoch  27/200: Train Loss = 0.000035, Val Loss = 0.000108
+Epoch  28/200: Train Loss = 0.000027, Val Loss = 0.000010
+Epoch  29/200: Train Loss = 0.000031, Val Loss = 0.000013
+Epoch  30/200: Train Loss = 0.000029, Val Loss = 0.000006
+Epoch  31/200: Train Loss = 0.000025, Val Loss = 0.000016
+Epoch  32/200: Train Loss = 0.000035, Val Loss = 0.000076
+Epoch  33/200: Train Loss = 0.000023, Val Loss = 0.000013
+Epoch  34/200: Train Loss = 0.000026, Val Loss = 0.000017
+Epoch  35/200: Train Loss = 0.000023, Val Loss = 0.000015
+Epoch  36/200: Train Loss = 0.000027, Val Loss = 0.000006
+Epoch  37/200: Train Loss = 0.000024, Val Loss = 0.000017
+Epoch  38/200: Train Loss = 0.000026, Val Loss = 0.000019
+Epoch  39/200: Train Loss = 0.000028, Val Loss = 0.000005
+Epoch  40/200: Train Loss = 0.000027, Val Loss = 0.000009
+Epoch  41/200: Train Loss = 0.000022, Val Loss = 0.000005
+Epoch  42/200: Train Loss = 0.000023, Val Loss = 0.000011
+Epoch  43/200: Train Loss = 0.000023, Val Loss = 0.000013
+Epoch  44/200: Train Loss = 0.000022, Val Loss = 0.000015
+Epoch  45/200: Train Loss = 0.000027, Val Loss = 0.000006
+Epoch  46/200: Train Loss = 0.000025, Val Loss = 0.000081
+Epoch  47/200: Train Loss = 0.000016, Val Loss = 0.000031
+Epoch  48/200: Train Loss = 0.000022, Val Loss = 0.000018
+Epoch  49/200: Train Loss = 0.000026, Val Loss = 0.000008
+Epoch  50/200: Train Loss = 0.000025, Val Loss = 0.000002
+Epoch  51/200: Train Loss = 0.000022, Val Loss = 0.000002
+Epoch  52/200: Train Loss = 0.000023, Val Loss = 0.000004
+Epoch  53/200: Train Loss = 0.000018, Val Loss = 0.000053
+Epoch  54/200: Train Loss = 0.000019, Val Loss = 0.000004
+Epoch  55/200: Train Loss = 0.000017, Val Loss = 0.000009
+Epoch  56/200: Train Loss = 0.000023, Val Loss = 0.000017
+Epoch  57/200: Train Loss = 0.000028, Val Loss = 0.000001
+Epoch  58/200: Train Loss = 0.000022, Val Loss = 0.000001
+Epoch  59/200: Train Loss = 0.000015, Val Loss = 0.000052
+Epoch  60/200: Train Loss = 0.000017, Val Loss = 0.000018
+Epoch  61/200: Train Loss = 0.000024, Val Loss = 0.000017
+Epoch  62/200: Train Loss = 0.000025, Val Loss = 0.000069
+Epoch  63/200: Train Loss = 0.000012, Val Loss = 0.000020
+Epoch  64/200: Train Loss = 0.000022, Val Loss = 0.000006
+Epoch  65/200: Train Loss = 0.000022, Val Loss = 0.000006
+Epoch  66/200: Train Loss = 0.000018, Val Loss = 0.000023
+Epoch  67/200: Train Loss = 0.000022, Val Loss = 0.000007
+Epoch  68/200: Train Loss = 0.000018, Val Loss = 0.000012
+Epoch  69/200: Train Loss = 0.000020, Val Loss = 0.000019
+Epoch  70/200: Train Loss = 0.000020, Val Loss = 0.000013
+Epoch  71/200: Train Loss = 0.000016, Val Loss = 0.000061
+Epoch  72/200: Train Loss = 0.000020, Val Loss = 0.000003
+Epoch  73/200: Train Loss = 0.000015, Val Loss = 0.000002
+Epoch  74/200: Train Loss = 0.000031, Val Loss = 0.000025
+Epoch  75/200: Train Loss = 0.000015, Val Loss = 0.000017
+Epoch  76/200: Train Loss = 0.000017, Val Loss = 0.000023
+Epoch  77/200: Train Loss = 0.000018, Val Loss = 0.000018
+Epoch  78/200: Train Loss = 0.000013, Val Loss = 0.000003
+Epoch  79/200: Train Loss = 0.000016, Val Loss = 0.000017
+Epoch  80/200: Train Loss = 0.000018, Val Loss = 0.000018
+Epoch  81/200: Train Loss = 0.000020, Val Loss = 0.000010
+Epoch  82/200: Train Loss = 0.000020, Val Loss = 0.000051
+Epoch  83/200: Train Loss = 0.000021, Val Loss = 0.000003
+Epoch  84/200: Train Loss = 0.000014, Val Loss = 0.000003
+Epoch  85/200: Train Loss = 0.000017, Val Loss = 0.000024
+Epoch  86/200: Train Loss = 0.000014, Val Loss = 0.000014
+Epoch  87/200: Train Loss = 0.000021, Val Loss = 0.000013
+Epoch  88/200: Train Loss = 0.000016, Val Loss = 0.000012
+Epoch  89/200: Train Loss = 0.000022, Val Loss = 0.000016
+Epoch  90/200: Train Loss = 0.000011, Val Loss = 0.000026
+Epoch  91/200: Train Loss = 0.000017, Val Loss = 0.000050
+Epoch  92/200: Train Loss = 0.000012, Val Loss = 0.000018
+Epoch  93/200: Train Loss = 0.000018, Val Loss = 0.000018
+Epoch  94/200: Train Loss = 0.000025, Val Loss = 0.000001
+Epoch  95/200: Train Loss = 0.000020, Val Loss = 0.000045
+Epoch  96/200: Train Loss = 0.000012, Val Loss = 0.000014
+Epoch  97/200: Train Loss = 0.000019, Val Loss = 0.000004
+Epoch  98/200: Train Loss = 0.000013, Val Loss = 0.000009
+Epoch  99/200: Train Loss = 0.000013, Val Loss = 0.000007
+Epoch 100/200: Train Loss = 0.000018, Val Loss = 0.000002
+Epoch 101/200: Train Loss = 0.000015, Val Loss = 0.000005
+Epoch 102/200: Train Loss = 0.000017, Val Loss = 0.000004
+Epoch 103/200: Train Loss = 0.000015, Val Loss = 0.000020
+Epoch 104/200: Train Loss = 0.000012, Val Loss = 0.000001
+Epoch 105/200: Train Loss = 0.000017, Val Loss = 0.000013
+Epoch 106/200: Train Loss = 0.000016, Val Loss = 0.000006
+Epoch 107/200: Train Loss = 0.000014, Val Loss = 0.000015
+Epoch 108/200: Train Loss = 0.000023, Val Loss = 0.000000
+Epoch 109/200: Train Loss = 0.000009, Val Loss = 0.000004
+Epoch 110/200: Train Loss = 0.000013, Val Loss = 0.000001
+Epoch 111/200: Train Loss = 0.000017, Val Loss = 0.000003
+Epoch 112/200: Train Loss = 0.000015, Val Loss = 0.000001
+Epoch 113/200: Train Loss = 0.000012, Val Loss = 0.000003
+Epoch 114/200: Train Loss = 0.000013, Val Loss = 0.000013
+Epoch 115/200: Train Loss = 0.000017, Val Loss = 0.000002
+Epoch 116/200: Train Loss = 0.000014, Val Loss = 0.000015
+Epoch 117/200: Train Loss = 0.000013, Val Loss = 0.000266
+Epoch 118/200: Train Loss = 0.000016, Val Loss = 0.000030
+Epoch 119/200: Train Loss = 0.000018, Val Loss = 0.000043
+Epoch 120/200: Train Loss = 0.000008, Val Loss = 0.000098
+Epoch 121/200: Train Loss = 0.000016, Val Loss = 0.000001
+Epoch 122/200: Train Loss = 0.000014, Val Loss = 0.000017
+Epoch 123/200: Train Loss = 0.000011, Val Loss = 0.000003
+Epoch 124/200: Train Loss = 0.000016, Val Loss = 0.000006
+Epoch 125/200: Train Loss = 0.000010, Val Loss = 0.000006
+Epoch 126/200: Train Loss = 0.000015, Val Loss = 0.000007
+Epoch 127/200: Train Loss = 0.000018, Val Loss = 0.000078
+Epoch 128/200: Train Loss = 0.000010, Val Loss = 0.000018
+Epoch 129/200: Train Loss = 0.000012, Val Loss = 0.000002
+Epoch 130/200: Train Loss = 0.000018, Val Loss = 0.000001
+Epoch 131/200: Train Loss = 0.000012, Val Loss = 0.000003
+Epoch 132/200: Train Loss = 0.000015, Val Loss = 0.000000
+Epoch 133/200: Train Loss = 0.000018, Val Loss = 0.000000
+Epoch 134/200: Train Loss = 0.000011, Val Loss = 0.000004
+Epoch 135/200: Train Loss = 0.000014, Val Loss = 0.000001
+Epoch 136/200: Train Loss = 0.000011, Val Loss = 0.000015
+Epoch 137/200: Train Loss = 0.000013, Val Loss = 0.000003
+Epoch 138/200: Train Loss = 0.000015, Val Loss = 0.000009
+Epoch 139/200: Train Loss = 0.000009, Val Loss = 0.000008
+Epoch 140/200: Train Loss = 0.000014, Val Loss = 0.000001
+Epoch 141/200: Train Loss = 0.000015, Val Loss = 0.000037
+Epoch 142/200: Train Loss = 0.000011, Val Loss = 0.000010
+Epoch 143/200: Train Loss = 0.000013, Val Loss = 0.000003
+Epoch 144/200: Train Loss = 0.000013, Val Loss = 0.000022
+Epoch 145/200: Train Loss = 0.000015, Val Loss = 0.000003
+Epoch 146/200: Train Loss = 0.000008, Val Loss = 0.000011
+Epoch 147/200: Train Loss = 0.000014, Val Loss = 0.000008
+Epoch 148/200: Train Loss = 0.000012, Val Loss = 0.000009
+Epoch 149/200: Train Loss = 0.000013, Val Loss = 0.000006
+Epoch 150/200: Train Loss = 0.000012, Val Loss = 0.000006
+Epoch 151/200: Train Loss = 0.000012, Val Loss = 0.000005
+Epoch 152/200: Train Loss = 0.000016, Val Loss = 0.000000
+Epoch 153/200: Train Loss = 0.000012, Val Loss = 0.000007
+Epoch 154/200: Train Loss = 0.000011, Val Loss = 0.000005
+Epoch 155/200: Train Loss = 0.000012, Val Loss = 0.000002
+Epoch 156/200: Train Loss = 0.000012, Val Loss = 0.000001
+Epoch 157/200: Train Loss = 0.000012, Val Loss = 0.000000
+Epoch 158/200: Train Loss = 0.000013, Val Loss = 0.000002
+Epoch 159/200: Train Loss = 0.000010, Val Loss = 0.000005
+Epoch 160/200: Train Loss = 0.000015, Val Loss = 0.000004
+Epoch 161/200: Train Loss = 0.000010, Val Loss = 0.000001
+Epoch 162/200: Train Loss = 0.000011, Val Loss = 0.000036
+Epoch 163/200: Train Loss = 0.000011, Val Loss = 0.000011
+Epoch 164/200: Train Loss = 0.000010, Val Loss = 0.000005
+Epoch 165/200: Train Loss = 0.000012, Val Loss = 0.000028
+Epoch 166/200: Train Loss = 0.000015, Val Loss = 0.000003
+Epoch 167/200: Train Loss = 0.000014, Val Loss = 0.000000
+Epoch 168/200: Train Loss = 0.000013, Val Loss = 0.000019
+Epoch 169/200: Train Loss = 0.000013, Val Loss = 0.000045
+Epoch 170/200: Train Loss = 0.000007, Val Loss = 0.000010
+Epoch 171/200: Train Loss = 0.000017, Val Loss = 0.000001
+Epoch 172/200: Train Loss = 0.000008, Val Loss = 0.000006
+Epoch 173/200: Train Loss = 0.000013, Val Loss = 0.000001
+Epoch 174/200: Train Loss = 0.000011, Val Loss = 0.000000
+Epoch 175/200: Train Loss = 0.000014, Val Loss = 0.000001
+Epoch 176/200: Train Loss = 0.000011, Val Loss = 0.000002
+Epoch 177/200: Train Loss = 0.000011, Val Loss = 0.000003
+Epoch 178/200: Train Loss = 0.000010, Val Loss = 0.000019
+Epoch 179/200: Train Loss = 0.000017, Val Loss = 0.000003
+Epoch 180/200: Train Loss = 0.000009, Val Loss = 0.000001
+Epoch 181/200: Train Loss = 0.000009, Val Loss = 0.000006
+Epoch 182/200: Train Loss = 0.000012, Val Loss = 0.000016
+Epoch 183/200: Train Loss = 0.000012, Val Loss = 0.000020
+Epoch 184/200: Train Loss = 0.000008, Val Loss = 0.000004
+Epoch 185/200: Train Loss = 0.000015, Val Loss = 0.000003
+Epoch 186/200: Train Loss = 0.000008, Val Loss = 0.000023
+Epoch 187/200: Train Loss = 0.000008, Val Loss = 0.000008
+Epoch 188/200: Train Loss = 0.000013, Val Loss = 0.000001
+Epoch 189/200: Train Loss = 0.000009, Val Loss = 0.000004
+Epoch 190/200: Train Loss = 0.000010, Val Loss = 0.000002
+Epoch 191/200: Train Loss = 0.000015, Val Loss = 0.000001
+Epoch 192/200: Train Loss = 0.000008, Val Loss = 0.000004
+Epoch 193/200: Train Loss = 0.000012, Val Loss = 0.000084
+Epoch 194/200: Train Loss = 0.000008, Val Loss = 0.000012
+Epoch 195/200: Train Loss = 0.000014, Val Loss = 0.000003
+Epoch 196/200: Train Loss = 0.000007, Val Loss = 0.000002
+Epoch 197/200: Train Loss = 0.000010, Val Loss = 0.000005
+Epoch 198/200: Train Loss = 0.000011, Val Loss = 0.000009
+Epoch 199/200: Train Loss = 0.000011, Val Loss = 0.000013
+Epoch 200/200: Train Loss = 0.000011, Val Loss = 0.000020
+================================================================================
+
+Training completed! Best validation loss: 0.000000
+Epoch log saved to: ./results_20251111_182817/epoch_log.txt
+Training curves saved to ./results_20251111_182817/training_curves.png
+Training log saved to ./results_20251111_182817/training_log.json
+Model parameters saved to ./results_20251111_182817/model_parameters.json
+Final model saved to ./results_20251111_182817/final_model.pt
+
+Model 4: MLP with ReLU + ReLU - Training Summary
+=================================================
+Timestamp: 20251111_182817
+Device: mps
+
+Data:
+- Input dimension: 16
+- Total samples: 50000
+- Training samples: 40000
+- Validation samples: 10000
+
+Hyperparameters:
+- Batch size: 32
+- Learning rate: 0.001
+- Number of epochs: 200
+- Hidden dimension: 64
+- Dropout rate: 0.0
+
+Model Architecture:
+- Type: MLP with Sequential layers
+- Layer 1: Linear(16 -> 64)
+- Activation 1: ReLU
+- Layer 2: Linear(64 -> 64)
+- Activation 2: ReLU
+- Dropout: 0.0
+- Output: Linear(64 -> 1)
+- Total parameters: 5313
+
+Results:
+- Final training loss (MSE): 0.000011
+- Final validation loss (MSE): 0.000020
+- Best validation loss (MSE): 0.000000
+
+Files saved:
+- best_model.pt: Best model checkpoint
+- final_model.pt: Final model after all epochs
+- training_curves.png: Loss curves visualization
+- training_log.json: Detailed training log
+- model_parameters.json: Model parameters summary
+- epoch_log.txt: Per-epoch training log
+
+Summary saved to ./results_20251111_182817/summary.txt

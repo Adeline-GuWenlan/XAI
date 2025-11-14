@@ -1,0 +1,25 @@
+{
+    "model": "MLP with Symmetric Activation (Tanh) + ReLU",
+    "timestamp": "2025-11-11 17:52:32",
+    "device": "mps",
+    "hyperparameters": {
+        "batch_size": 32,
+        "learning_rate": 0.001,
+        "num_epochs": 200,
+        "train_split": 0.8,
+        "hidden_dim": 64,
+        "dropout_rate": 0.2
+    },
+    "data": {
+        "X_path": "/Users/guwenlan/Desktop/XAI/INSPECT/Data/2q_1000samples_poisson_lam1.1_20251111_163332_pauli_vectors.npy",
+        "Y_path": "/Users/guwenlan/Desktop/XAI/INSPECT/Data/2q_1000samples_poisson_lam1.1_20251111_163332_sn_labels.npy",
+        "input_dim": 16,
+        "train_samples": 800,
+        "val_samples": 200
+    },
+    "results": {
+        "final_train_loss": 0.014533957801759242,
+        "final_val_loss": 0.019677247186856612,
+        "best_val_loss": 0.01733907258936337
+    }
+}

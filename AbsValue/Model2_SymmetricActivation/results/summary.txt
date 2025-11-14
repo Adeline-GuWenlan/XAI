@@ -1,0 +1,40 @@
+
+Model 2: MLP with Symmetric Activation (Tanh) + ReLU - Training Summary
+========================================================================
+Timestamp: 2025-11-11 17:52:32
+Device: mps
+
+Data:
+- Input dimension: 16
+- Total samples: 1000
+- Training samples: 800
+- Validation samples: 200
+
+Hyperparameters:
+- Batch size: 32
+- Learning rate: 0.001
+- Number of epochs: 200
+- Hidden dimension: 64
+- Dropout rate: 0.2
+
+Model Architecture:
+- Type: MLP with Sequential layers
+- Layer 1: Linear(16 -> 64)
+- Activation 1: Tanh (Symmetric)
+- Layer 2: Linear(64 -> 64)
+- Activation 2: ReLU
+- Dropout: 0.2
+- Output: Linear(64 -> 1)
+- Total parameters: 5313
+
+Results:
+- Final training loss (MSE): 0.014534
+- Final validation loss (MSE): 0.019677
+- Best validation loss (MSE): 0.017339
+
+Files saved:
+- best_model.pt: Best model checkpoint
+- final_model.pt: Final model after all epochs
+- training_curves.png: Loss curves visualization
+- training_log.json: Detailed training log
+- model_parameters.json: Model parameters summary

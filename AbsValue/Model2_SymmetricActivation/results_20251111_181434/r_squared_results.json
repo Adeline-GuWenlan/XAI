@@ -1,0 +1,23 @@
+{
+    "model": "MLP with Symmetric Activation (Tanh) + ReLU",
+    "timestamp": "20251111_181434",
+    "data": {
+        "total_samples": 50000,
+        "train_samples": 40000,
+        "val_samples": 10000
+    },
+    "metrics": {
+        "train": {
+            "r_squared": 0.9650207012891769,
+            "mse": 0.0032057841308414936
+        },
+        "validation": {
+            "r_squared": 0.9639147035777569,
+            "mse": 0.0032785881776362658
+        }
+    },
+    "comparison": {
+        "train_vs_val_r2_diff": 0.0011059977114200592,
+        "train_vs_val_mse_diff": -7.280404679477215e-05
+    }
+}
