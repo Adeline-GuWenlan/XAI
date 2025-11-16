@@ -1,6 +1,7 @@
 """
-Model 4: MLP with ReLU + ReLU
-Training script for MLP with ReLU activation functions
+Model 5: Encoder-MLP Training Script
+Training script for Encoder-MLP architecture with flexible pooling methods
+Input: Pauli vectors of shape [B, 64]
 """
 
 import numpy as np
@@ -10,20 +11,16 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, random_split
 import os
 import json
+import argparse
 from datetime import datetime
 import matplotlib.pyplot as plt
 from scipy.stats import spearmanr, pearsonr
 
+from encoder_mlp_model import create_encoder_mlp_model
+
 # Set random seeds for reproducibility
 torch.manual_seed(42)
 np.random.seed(42)
-
-# Paths
-DATA_DIR = "/Users/guwenlan/Desktop/XAI/Full_Ori/3q"
-
-# Dataset paths - Updated to 50000 samples
-X_PATH = os.path.join(DATA_DIR, "3q_100000samples_uniform_20251114_182049_pauli_vectors.npy")
-Y_PATH = os.path.join(DATA_DIR, "3q_100000samples_uniform_20251114_182049_sn_labels.npy")
 
 
 class QuantumDataset(Dataset):
@@ -32,30 +29,12 @@ class QuantumDataset(Dataset):
         self.X = torch.from_numpy(np.load(X_path)).float()
         # Reshape Y to [n, 1] to match model output shape [batch_size, 1]
         self.Y = torch.from_numpy(np.load(Y_path)).float().unsqueeze(1)
+
     def __len__(self):
         return len(self.X)
 
     def __getitem__(self, idx):
         return self.X[idx], self.Y[idx]
-
-
-class MLPReLUActivation(nn.Module):
-    """MLP with ReLU + ReLU"""
-    def __init__(self, input_dim, hidden_dim2=256, hidden_dim1=128, output_dim=1):
-        super(MLPReLUActivation, self).__init__()
-
-        self.model = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim1),      # MLP layer 1
-            nn.ReLU(),                              # ReLU activation 1
-            nn.Linear(hidden_dim1, hidden_dim2),      # MLP layer 2
-            nn.ReLU(),                              # ReLU activation 2
-            nn.Linear(hidden_dim2, hidden_dim1),
-            nn.ReLU(),
-            nn.Linear(hidden_dim1, output_dim)       # Output layer
-        )
-
-    def forward(self, x):
-        return self.model(x)
 
 
 def train_epoch(model, dataloader, criterion, optimizer, device):
@@ -135,20 +114,39 @@ def evaluate(model, dataloader, criterion, device):
 
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Train Encoder-MLP model')
+    parser.add_argument('--pooling', type=str, default='CLS', choices=['CLS', 'weight'],
+                        help='Pooling method: CLS or weight')
+    parser.add_argument('--d_model', type=int, default=64,
+                        help='Dimension of transformer model')
+    parser.add_argument('--nhead', type=int, default=4,
+                        help='Number of attention heads')
+    parser.add_argument('--num_encoder_layers', type=int, default=2,
+                        help='Number of encoder layers')
+    parser.add_argument('--dim_feedforward', type=int, default=512,
+                        help='Dimension of feedforward network')
+    parser.add_argument('--batch_size', type=int, default=32,
+                        help='Batch size')
+    parser.add_argument('--learning_rate', type=float, default=0.001,
+                        help='Learning rate')
+    parser.add_argument('--num_epochs', type=int, default=30,
+                        help='Number of training epochs')
+    parser.add_argument('--train_split', type=float, default=0.95,
+                        help='Train/validation split ratio')
+
+    args = parser.parse_args()
+
     # Create timestamped results directory
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    RESULTS_DIR = f"./results_{timestamp}"
+    RESULTS_DIR = f"./results_{args.pooling.lower()}_{timestamp}"
     os.makedirs(RESULTS_DIR, exist_ok=True)
     print(f"Results will be saved to: {RESULTS_DIR}")
 
-    # Hyperparameters
-    BATCH_SIZE = 32
-    LEARNING_RATE = 0.001
-    NUM_EPOCHS = 30
-    TRAIN_SPLIT = 0.95
-    HIDDEN_DIM1 = 128
-    HIDDEN_DIM2 = 256
-    DROPOUT_RATE = 0.0
+    # Data paths
+    DATA_DIR = "/Users/guwenlan/Desktop/XAI/Full_Ori/3q"
+    X_PATH = os.path.join(DATA_DIR, "3q_100000samples_uniform_20251114_182049_pauli_vectors.npy")
+    Y_PATH = os.path.join(DATA_DIR, "3q_100000samples_uniform_20251114_182049_sn_labels.npy")
 
     # Device - prioritize MPS (Apple Silicon GPU), then CUDA, then CPU
     if torch.backends.mps.is_available():
@@ -166,27 +164,34 @@ def main():
     dataset = QuantumDataset(X_PATH, Y_PATH)
 
     # Split into train and validation
-    train_size = int(TRAIN_SPLIT * len(dataset))
+    train_size = int(args.train_split * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
     print(f"Train samples: {train_size}, Validation samples: {val_size}")
+    print(f"Input shape: {dataset.X.shape}")
 
     # Create model
-    input_dim = dataset.X.shape[1]
-    model = MLPReLUActivation(input_dim, hidden_dim1=HIDDEN_DIM1,hidden_dim2=HIDDEN_DIM2).to(device)
+    print(f"\nCreating Encoder-MLP model with {args.pooling.upper()} pooling...")
+    model = create_encoder_mlp_model(
+        pooling_method=args.pooling,
+        d_model=args.d_model,
+        nhead=args.nhead,
+        num_encoder_layers=args.num_encoder_layers,
+        dim_feedforward=args.dim_feedforward
+    ).to(device)
 
     # Print model architecture
     print("\nModel Architecture:")
     print(model)
-    print(f"\nTotal parameters: {sum(p.numel() for p in model.parameters())}")
+    print(f"\nTotal parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Loss and optimizer
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
     # Training loop
     print("\nStarting training...")
@@ -206,7 +211,7 @@ def main():
         }
         best_val_loss = float('inf')
 
-        for epoch in range(NUM_EPOCHS):
+        for epoch in range(args.num_epochs):
             train_loss = train_epoch(model, train_loader, criterion, optimizer, device)
             val_metrics = evaluate(model, val_loader, criterion, device)
 
@@ -220,10 +225,10 @@ def main():
             epoch_log.write(f"{epoch+1}\t{train_loss:.6f}\t{val_metrics['mse']:.6f}\t"
                           f"{val_metrics['r_squared']:.6f}\t{val_metrics['spearman']:.6f}\t"
                           f"{val_metrics['pearson']:.6f}\n")
-            epoch_log.flush()  # Ensure it's written immediately
+            epoch_log.flush()
 
             # Print to console
-            print(f"Epoch {epoch+1:3d}/{NUM_EPOCHS}: Train Loss = {train_loss:.6f}, "
+            print(f"Epoch {epoch+1:3d}/{args.num_epochs}: Train Loss = {train_loss:.6f}, "
                   f"Val MSE = {val_metrics['mse']:.6f}, R² = {val_metrics['r_squared']:.4f}, "
                   f"Spearman = {val_metrics['spearman']:.4f}, Pearson = {val_metrics['pearson']:.4f}")
 
@@ -236,7 +241,7 @@ def main():
     print(f"\nTraining completed! Best validation loss: {best_val_loss:.6f}")
     print(f"Epoch log saved to: {epoch_log_path}")
 
-    # Plot training curves with multiple subplots
+    # Plot training curves
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
 
     # Plot 1: MSE Loss
@@ -278,29 +283,32 @@ def main():
     axes[1, 1].axhline(y=0, color='gray', linestyle='--', alpha=0.5)
     axes[1, 1].axhline(y=1, color='gray', linestyle='--', alpha=0.5)
 
-    plt.suptitle('Model 4: MLP with ReLU + ReLU - Training Metrics', fontsize=16, y=0.995)
+    plt.suptitle(f'Model 5: Encoder-MLP ({args.pooling.upper()} pooling) - Training Metrics',
+                 fontsize=16, y=0.995)
     plt.tight_layout()
     plt.savefig(os.path.join(RESULTS_DIR, "training_curves.png"), dpi=150, bbox_inches='tight')
     print(f"Training curves saved to {os.path.join(RESULTS_DIR, 'training_curves.png')}")
 
     # Save training log
     log = {
-        "model": "MLP with ReLU + ReLU",
+        "model": f"Encoder-MLP with {args.pooling.upper()} pooling",
         "timestamp": timestamp,
         "device": str(device),
         "hyperparameters": {
-            "batch_size": BATCH_SIZE,
-            "learning_rate": LEARNING_RATE,
-            "num_epochs": NUM_EPOCHS,
-            "train_split": TRAIN_SPLIT,
-            "hidden_dim1": HIDDEN_DIM1,
-            "hidden_dim2": HIDDEN_DIM2,
-            "dropout_rate": DROPOUT_RATE
+            "pooling_method": args.pooling,
+            "d_model": args.d_model,
+            "nhead": args.nhead,
+            "num_encoder_layers": args.num_encoder_layers,
+            "dim_feedforward": args.dim_feedforward,
+            "batch_size": args.batch_size,
+            "learning_rate": args.learning_rate,
+            "num_epochs": args.num_epochs,
+            "train_split": args.train_split
         },
         "data": {
             "X_path": X_PATH,
             "Y_path": Y_PATH,
-            "input_dim": input_dim,
+            "input_shape": list(dataset.X.shape),
             "train_samples": train_size,
             "val_samples": val_size
         },
@@ -322,15 +330,16 @@ def main():
     model_params = {
         "total_parameters": sum(p.numel() for p in model.parameters()),
         "trainable_parameters": sum(p.numel() for p in model.parameters() if p.requires_grad),
-        "model_architecture": str(model),
-        "layer_details": {
-            "input_dim": input_dim,
-            "hidden_dim1": HIDDEN_DIM1,
-            "hidden_dim2": HIDDEN_DIM2,
-            "output_dim": 1,
-            "activation_1": "ReLU",
-            "activation_2": "ReLU",
-            "dropout_rate": DROPOUT_RATE
+        "model_type": f"Encoder-MLP with {args.pooling.upper()} pooling",
+        "architecture_details": {
+            "input_shape": list(dataset.X.shape),
+            "d_model": args.d_model,
+            "nhead": args.nhead,
+            "num_encoder_layers": args.num_encoder_layers,
+            "dim_feedforward": args.dim_feedforward,
+            "pooling_method": args.pooling,
+            "use_cls_token": args.pooling.upper() == 'CLS',
+            "mlp_structure": "64 -> 128 -> 256 -> 128 -> 1 (edit in MLPHead class)"
         }
     }
 
@@ -344,33 +353,36 @@ def main():
 
     # Create summary report
     summary = f"""
-Model 4: MLP with ReLU + ReLU - Training Summary
-=================================================
+Model 5: Encoder-MLP with {args.pooling.upper()} Pooling - Training Summary
+{'=' * 80}
 Timestamp: {timestamp}
 Device: {device}
 
 Data:
-- Input dimension: {input_dim}
+- Input shape: {dataset.X.shape}
 - Total samples: {len(dataset)}
 - Training samples: {train_size}
 - Validation samples: {val_size}
 
 Hyperparameters:
-- Batch size: {BATCH_SIZE}
-- Learning rate: {LEARNING_RATE}
-- Number of epochs: {NUM_EPOCHS}
-- Hidden dimension: {HIDDEN_DIM1, HIDDEN_DIM2,}
-- Dropout rate: {DROPOUT_RATE}
+- Pooling method: {args.pooling.upper()}
+- Batch size: {args.batch_size}
+- Learning rate: {args.learning_rate}
+- Number of epochs: {args.num_epochs}
+- Transformer d_model: {args.d_model}
+- Number of attention heads: {args.nhead}
+- Number of encoder layers: {args.num_encoder_layers}
+- Feedforward dimension: {args.dim_feedforward}
 
 Model Architecture:
-- Type: MLP with Sequential layers
-- Layer 1: Linear({input_dim} -> {HIDDEN_DIM1})
-- Activation 1: ReLU
-- Layer 2: Linear({HIDDEN_DIM1} -> {HIDDEN_DIM2})
-- Activation 2: ReLU
-- Layer 3: Linear({HIDDEN_DIM2} -> {HIDDEN_DIM1})
-- Output: Linear({HIDDEN_DIM1} -> 1)
-- Total parameters: {model_params['total_parameters']}
+- Type: Encoder-MLP with {args.pooling.upper()} pooling
+- CLS token: {'Yes' if args.pooling.upper() == 'CLS' else 'No'}
+- Input: [B, 64] Pauli vectors -> [B, 64, 1] tokens
+- Projection: 1 -> {args.d_model}
+- Encoder: {args.num_encoder_layers} layers
+- Pooling: {args.pooling.upper()} method
+- MLP: {args.d_model} -> 128 -> 256 -> 128 -> 1
+- Total parameters: {model_params['total_parameters']:,}
 
 Results:
 - Final training MSE: {train_losses[-1]:.6f}
@@ -389,6 +401,8 @@ Files saved:
 - training_log.json: Detailed training log
 - model_parameters.json: Model parameters summary
 - epoch_log.txt: Per-epoch training log
+
+Note: Edit MLP structure in encoder_mlp_model.py -> MLPHead class
 """
 
     with open(os.path.join(RESULTS_DIR, "summary.txt"), 'w') as f:
