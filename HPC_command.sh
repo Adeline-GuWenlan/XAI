@@ -7,15 +7,12 @@ git reflog
 ##############################################################
       # ----------------------语法----------------------
       scp -r /path/to/local_dir username@remote.host:/path/to/remote_dir
-      rsync -av --exclude='.git' Decoded_Tokens gwl@172.16.51.235:/home/gwl/3q
+      rsync -r -av /Users/guwenlan/Desktop/XAI/Pauli_Input/Model_5Encoder_MLP \
+    gwl@172.16.51.235:/home/gwl/
+    # 没有/，上传完整文件夹。
           #  ----------------------批量----------------------
-            # 更新：cab20fd - cab20fd (HEAD -> 7.31whther_attention+Mask) HEAD@{2}: commit: Add experiment_manager.sh
-            scp -r /Users/guwenlan/Desktop/MixMLP/Decoded_Tokens\
-            gwl@172.16.51.235:/home/gwl/MixMLP
-          
+
           # ---------------------- 单独文件 ----------------------
-            scp /Users/guwenlan/Desktop/MixMLP/train_single.py gwl@172.16.51.235:/home/gwl/MixMLP
-scp EnhancedTransformer/train_enhanced.py gwl@172.16.51.235:/home/gwl/EnhancedTransformer
 
 
 ##############################################################
@@ -151,3 +148,6 @@ python /Users/guwenlan/Desktop/XAI/RoMHandbook/RoM_handbook/generate_balanced_ma
 
  /Users/guwenlan/Desktop/XAI/RoMHandbook/RoM_handbook/generate_balanced_magic_dataset.py --num 1000 --output "/Users/guwenlan/Desktop/XAI/INSPECT/Architec/TESTWITHRoM" --lam_magic 40 --seed 114514
 python /Users/guwenlan/Desktop/XAI/INSPECT/DataGeneration/Expectation/generate_complete_dataset.py --n_qubits 3 --num_samples 10000 --method poisson --lam 1 --seed 114
+
+
+python generate_complete_dataset.py -n 5 --num 200000 -o /home/gwl/Expectation/SN_5q

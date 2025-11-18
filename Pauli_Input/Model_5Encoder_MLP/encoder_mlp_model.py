@@ -152,17 +152,259 @@ class MLPHead(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-#NOTE: for the TODO below, use as much package as possible, ie avoding creating your own functions or class. 
-#NOTE: However, do create a seperate .md doc(under"/Users/guwenlan/Desktop/XAI/Pauli_Input/Model_5Encoder_MLP") 
-#NOTE: that specify the parameter of each class or method u called and listed all the paramters, whether default or modified, in the script. 
-#TODO: create a new regression head below, parallel to MLPReLUActivation, and instead use a voting mechanism that add three MLPs(of different depth) outputs with different weight. reference the _build_asymmetric_ensemble in '/Users/guwenlan/Desktop/XAI/Model_Archi/mlp.py'
 
-#TODO: create a new regression head below, with a Lasso inplementation with selfdefined penalty lambda
+class EnsembleMLPHead(nn.Module):
+    """
+    Ensemble MLP head with voting mechanism using three MLPs of different depths
+    Implements asymmetric ensemble similar to _build_asymmetric_ensemble
+    """
+    def __init__(self, input_dim, deep_weight=1.0, shallow_weight=1.0, medium_weight=1.0):
+        """
+        Args:
+            input_dim: Input feature dimension
+            deep_weight: Initial weight for deep pathway (default: 1.0)
+            shallow_weight: Initial weight for shallow pathway (default: 1.0)
+            medium_weight: Initial weight for medium pathway (default: 1.0)
+        """
+        super().__init__()
 
-#TODO: create a new regression head below, with a Gradient boosting decision tree and a regression head for precise regrression result. explicitly accept all possible restriction on growing a tree like depth, num of lead node, num sample to be assigned,, and allow user to self define them in the script. 
-#NOTE: note that no need to expose the tuning parameters, ie the depth of tree, Lasso penalty to the actual "/Users/guwenlan/Desktop/XAI/Pauli_Input/Model_5Encoder_MLP/train_encoder_mlp.py" script to avoid redundancy. assume user would change inplace.
-#NOTE: However update the /Users/guwenlan/Desktop/XAI/Pauli_Input/Model_5Encoder_MLP/train_encoder_mlp.py to also load all parameter of the actual regreassion head chosen by the user for replicability. 
-#NOTE: finally,
+        # Deep pathway for complex patterns (5 layers)
+        self.deep_pathway = nn.Sequential(
+            nn.Linear(input_dim, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1)
+        )
+
+        # Shallow pathway for direct patterns (2 layers)
+        self.shallow_pathway = nn.Sequential(
+            nn.Linear(input_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1)
+        )
+
+        # Medium pathway (3 layers)
+        self.medium_pathway = nn.Sequential(
+            nn.Linear(input_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1)
+        )
+
+        # Learnable ensemble weights (initialized with provided values)
+        initial_weights = torch.tensor([deep_weight, shallow_weight, medium_weight])
+        self.ensemble_weights = nn.Parameter(initial_weights)
+
+    def forward(self, x):
+        """
+        Forward pass with weighted ensemble voting
+
+        Args:
+            x: Input tensor of shape [B, input_dim]
+
+        Returns:
+            Weighted combination of three pathway outputs [B, 1]
+        """
+        # Get outputs from different pathways
+        deep_out = self.deep_pathway(x)
+        shallow_out = self.shallow_pathway(x)
+        medium_out = self.medium_pathway(x)
+
+        # Apply softmax to weights for proper normalization
+        weights = F.softmax(self.ensemble_weights, dim=0)
+
+        # Weighted combination
+        output = (weights[0] * deep_out +
+                 weights[1] * shallow_out +
+                 weights[2] * medium_out)
+
+        return output
+
+
+class LassoMLPHead(nn.Module):
+    """
+    MLP head with Lasso (L1) regularization
+    The L1 penalty is applied during training via a custom loss calculation
+    """
+    def __init__(self, input_dim, lasso_lambda=0.01):
+        """
+        Args:
+            input_dim: Input feature dimension
+            lasso_lambda: L1 regularization penalty coefficient (default: 0.01)
+        """
+        super().__init__()
+        self.lasso_lambda = lasso_lambda
+
+        # MLP structure
+        self.model = nn.Sequential(
+            nn.Linear(input_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
+        )
+
+    def forward(self, x):
+        """
+        Forward pass
+
+        Args:
+            x: Input tensor of shape [B, input_dim]
+
+        Returns:
+            Predictions of shape [B, 1]
+        """
+        return self.model(x)
+
+    def l1_penalty(self):
+        """
+        Compute L1 penalty on all model parameters
+
+        Returns:
+            L1 regularization term to be added to loss
+        """
+        l1_loss = 0.0
+        for param in self.model.parameters():
+            l1_loss += torch.sum(torch.abs(param))
+        return self.lasso_lambda * l1_loss
+
+
+class GBDTMLPHead(nn.Module):
+    """
+    Hybrid head combining Gradient Boosting Decision Tree with MLP
+    Uses sklearn's GradientBoostingRegressor for tree-based learning
+    followed by an MLP for final refinement
+
+    Note: GBDT is fitted during training phase, not via backpropagation
+    """
+    def __init__(
+        self,
+        input_dim,
+        n_estimators=100,
+        max_depth=3,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        max_leaf_nodes=None,
+        learning_rate=0.1,
+        subsample=1.0,
+        use_mlp_refinement=True
+    ):
+        """
+        Args:
+            input_dim: Input feature dimension
+            n_estimators: Number of boosting stages (trees) (default: 100)
+            max_depth: Maximum depth of individual trees (default: 3)
+            min_samples_split: Minimum samples required to split node (default: 2)
+            min_samples_leaf: Minimum samples required at leaf node (default: 1)
+            max_leaf_nodes: Maximum number of leaf nodes (default: None, unlimited)
+            learning_rate: Learning rate for boosting (default: 0.1)
+            subsample: Fraction of samples for fitting trees (default: 1.0)
+            use_mlp_refinement: Whether to use MLP for post-processing (default: True)
+        """
+        super().__init__()
+
+        # Import here to avoid requiring sklearn if not using this head
+        from sklearn.ensemble import GradientBoostingRegressor
+
+        self.input_dim = input_dim
+        self.use_mlp_refinement = use_mlp_refinement
+
+        # GBDT parameters (stored for replicability)
+        self.gbdt_params = {
+            'n_estimators': n_estimators,
+            'max_depth': max_depth,
+            'min_samples_split': min_samples_split,
+            'min_samples_leaf': min_samples_leaf,
+            'max_leaf_nodes': max_leaf_nodes,
+            'learning_rate': learning_rate,
+            'subsample': subsample,
+            'random_state': 42
+        }
+
+        # Initialize GBDT model (will be fitted during training)
+        self.gbdt = GradientBoostingRegressor(**self.gbdt_params)
+        self.gbdt_fitted = False
+
+        # Optional MLP refinement layer
+        if use_mlp_refinement:
+            self.mlp_refinement = nn.Sequential(
+                nn.Linear(1, 32),  # GBDT output (1) -> hidden layer
+                nn.ReLU(),
+                nn.Linear(32, 16),
+                nn.ReLU(),
+                nn.Linear(16, 1)  # Final output
+            )
+
+    def fit_gbdt(self, X, y):
+        """
+        Fit the GBDT model on training data
+        Should be called before forward pass during inference
+
+        Args:
+            X: Training features, numpy array or tensor of shape [N, input_dim]
+            y: Training targets, numpy array or tensor of shape [N,] or [N, 1]
+        """
+        # Convert to numpy if needed
+        if isinstance(X, torch.Tensor):
+            X = X.cpu().detach().numpy()
+        if isinstance(y, torch.Tensor):
+            y = y.cpu().detach().numpy()
+
+        # Flatten y if needed
+        if len(y.shape) > 1:
+            y = y.flatten()
+
+        # Fit GBDT
+        self.gbdt.fit(X, y)
+        self.gbdt_fitted = True
+
+    def forward(self, x):
+        """
+        Forward pass
+
+        Args:
+            x: Input tensor of shape [B, input_dim]
+
+        Returns:
+            Predictions of shape [B, 1]
+        """
+        # Convert to numpy for GBDT prediction
+        x_np = x.cpu().detach().numpy()
+
+        # Get GBDT predictions
+        if not self.gbdt_fitted:
+            # If GBDT not fitted, return zeros (should fit before using)
+            gbdt_pred = torch.zeros(x.shape[0], 1, device=x.device)
+        else:
+            gbdt_pred = self.gbdt.predict(x_np)
+            gbdt_pred = torch.from_numpy(gbdt_pred).float().to(x.device).unsqueeze(1)
+
+        # Apply MLP refinement if enabled
+        if self.use_mlp_refinement:
+            output = self.mlp_refinement(gbdt_pred)
+        else:
+            output = gbdt_pred
+
+        return output
+
+    def get_feature_importance(self):
+        """
+        Get feature importance from the fitted GBDT
+
+        Returns:
+            Feature importance array or None if not fitted
+        """
+        if self.gbdt_fitted:
+            return self.gbdt.feature_importances_
+        return None
 
 class EncoderMLPModel(nn.Module):
     """
@@ -183,7 +425,9 @@ class EncoderMLPModel(nn.Module):
         nhead=4,
         num_encoder_layers=2,
         dim_feedforward=512,
-        pooling_method='CLS'
+        pooling_method='CLS',
+        head_type='mlp',
+        head_params=None
     ):
         """
         Args:
@@ -192,12 +436,16 @@ class EncoderMLPModel(nn.Module):
             num_encoder_layers: Number of encoder layers
             dim_feedforward: Dimension of feedforward network
             pooling_method: 'CLS' or 'weight'
+            head_type: Type of regression head - 'mlp', 'ensemble', 'lasso', or 'gbdt'
+            head_params: Dictionary of parameters for the regression head (optional)
         """
         super().__init__()
 
         self.d_model = d_model
         self.pooling_method = pooling_method.upper()
         self.use_cls_token = (self.pooling_method == 'CLS')
+        self.head_type = head_type.lower()
+        self.head_params = head_params if head_params is not None else {}
 
         # Input projection: each Pauli coefficient (1 feature) → d_model
         self.input_projection = nn.Linear(1, d_model)
@@ -220,8 +468,17 @@ class EncoderMLPModel(nn.Module):
         # Pooling layer
         self.pooling = PoolingLayer(d_model=d_model, method=pooling_method)
 
-        # MLP head - edit structure in MLPHead class as needed
-        self.mlp_head = MLPHead(input_dim=d_model)
+        # MLP head - select based on head_type
+        if self.head_type == 'mlp':
+            self.mlp_head = MLPHead(input_dim=d_model)
+        elif self.head_type == 'ensemble':
+            self.mlp_head = EnsembleMLPHead(input_dim=d_model, **self.head_params)
+        elif self.head_type == 'lasso':
+            self.mlp_head = LassoMLPHead(input_dim=d_model, **self.head_params)
+        elif self.head_type == 'gbdt':
+            self.mlp_head = GBDTMLPHead(input_dim=d_model, **self.head_params)
+        else:
+            raise ValueError(f"Unknown head_type: {self.head_type}. Use 'mlp', 'ensemble', 'lasso', or 'gbdt'.")
 
     def forward(self, x, return_attention=False):
         """
@@ -303,24 +560,37 @@ def create_encoder_mlp_model(
     d_model=64,
     nhead=4,
     num_encoder_layers=2,
-    dim_feedforward=512
+    dim_feedforward=512,
+    head_type='mlp',
+    head_params=None
 ):
     """
     Factory function to create EncoderMLPModel with sensible defaults
 
     Example usage:
-        # CLS token pooling
-        model = create_encoder_mlp_model(pooling_method='CLS')
+        # CLS token pooling with standard MLP head
+        model = create_encoder_mlp_model(pooling_method='CLS', head_type='mlp')
 
-        # Weighted aggregation pooling
-        model = create_encoder_mlp_model(pooling_method='weight')
+        # Weighted aggregation pooling with ensemble head
+        model = create_encoder_mlp_model(pooling_method='weight', head_type='ensemble')
+
+        # Lasso head with custom penalty
+        model = create_encoder_mlp_model(head_type='lasso', head_params={'lasso_lambda': 0.01})
+
+        # GBDT head with custom tree parameters
+        model = create_encoder_mlp_model(
+            head_type='gbdt',
+            head_params={'n_estimators': 100, 'max_depth': 3}
+        )
     """
     return EncoderMLPModel(
         d_model=d_model,
         nhead=nhead,
         num_encoder_layers=num_encoder_layers,
         dim_feedforward=dim_feedforward,
-        pooling_method=pooling_method
+        pooling_method=pooling_method,
+        head_type=head_type,
+        head_params=head_params
     )
 
 

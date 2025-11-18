@@ -1,0 +1,221 @@
+# Configuration file for Encoder-MLP Model Training
+# Edit parameters here and load in training script for easy experimentation
+
+# =============================================================================
+# DATA CONFIGURATION
+# =============================================================================
+data:
+  data_dir: "/home/gwl/Full_Ori/3q"
+  X_filename: "3q_100000samples_uniform_20251114_182049_pauli_vectors.npy"
+  Y_filename: "3q_100000samples_uniform_20251114_182049_sn_labels.npy"
+  train_split: 0.95  # Train/validation split ratio (0.95 = 95% train, 5% val)
+
+# =============================================================================
+# TRAINING HYPERPARAMETERS
+# =============================================================================
+training:
+  batch_size: 32
+  learning_rate: 0.0005
+  num_epochs: 30
+  optimizer: "adam"  # Options: adam, sgd, adamw
+  # Optional: learning rate scheduler
+  use_scheduler: false
+  scheduler_type: "step"  # Options: step, cosine, plateau
+  scheduler_params:
+    step_size: 10
+    gamma: 0.1
+
+# =============================================================================
+# MODEL ARCHITECTURE - TRANSFORMER ENCODER
+# =============================================================================
+model:
+  # Core transformer parameters
+  d_model: 512              # Embedding dimension - try: 32, 64, 128, 256
+  nhead: 8                 # Number of attention heads - must divide d_model evenly
+                          # Try: 2, 4, 8 (ensure d_model % nhead == 0)
+  num_encoder_layers: 3    # Number of transformer encoder layers - try: 1, 2, 3, 4
+  dim_feedforward: 2048     # Feedforward network dimension - try: 256, 512, 1024, 2048
+
+  # Pooling method
+  pooling_method: "CLS"    # Options: "CLS" (CLS token) or "weight" (weighted aggregation)
+
+# =============================================================================
+# REGRESSION HEAD CONFIGURATION
+# =============================================================================
+# Select ONE head type: mlp, ensemble, lasso, or gbdt
+regression_head:
+  type: "mlp"  # Options: mlp, ensemble, lasso, gbdt
+
+  # ----------------------------------------------------------------------------
+  # MLP Head Parameters (type: mlp)
+  # ----------------------------------------------------------------------------
+  # Standard MLP with ReLU activations
+  # Architecture: d_model -> 128 -> 256 -> 128 -> 1
+  # To modify structure, edit MLPHead class in encoder_mlp_model.py
+  mlp:
+    # No additional parameters (structure is defined in model file)
+    # Edit encoder_mlp_model.py -> MLPHead class to change layer sizes
+    pass
+
+  # ----------------------------------------------------------------------------
+  # Ensemble MLP Head Parameters (type: ensemble)
+  # ----------------------------------------------------------------------------
+  # Three parallel pathways (deep, shallow, medium) with learnable weights
+  ensemble:
+    deep_weight: 1.0      # Initial weight for deep pathway (5 layers)
+    shallow_weight: 1.0   # Initial weight for shallow pathway (2 layers)
+    medium_weight: 1.0    # Initial weight for medium pathway (3 layers)
+    # Weights become learnable parameters and are normalized via softmax
+    # Try different initial values to bias toward certain pathways
+    # Example: deep_weight=2.0 gives more initial importance to deep pathway
+
+  # ----------------------------------------------------------------------------
+  # Lasso MLP Head Parameters (type: lasso)
+  # ----------------------------------------------------------------------------
+  # MLP with L1 regularization for sparsity
+  lasso:
+    lasso_lambda: 0.01    # L1 penalty coefficient
+                          # Higher values = more sparsity, simpler model
+                          # Try: 0.001, 0.01, 0.1, 1.0
+
+  # ----------------------------------------------------------------------------
+  # GBDT+MLP Hybrid Head Parameters (type: gbdt)
+  # ----------------------------------------------------------------------------
+  # Gradient Boosting Decision Tree followed by MLP refinement
+  # Requires scikit-learn: pip install scikit-learn
+  gbdt:
+    # GBDT tree parameters
+    n_estimators: 100          # Number of boosting stages (trees)
+                              # More trees = better fit but slower training
+                              # Try: 50, 100, 200, 500
+
+    max_depth: 3              # Maximum depth of individual trees
+                              # Deeper = more complex patterns but risk overfitting
+                              # Try: 2, 3, 4, 5, 6
+
+    learning_rate: 0.1        # Boosting learning rate (shrinkage)
+                              # Lower = more robust but needs more estimators
+                              # Try: 0.01, 0.05, 0.1, 0.2
+
+    min_samples_split: 2      # Minimum samples required to split internal node
+                              # Higher = more conservative splitting
+                              # Try: 2, 5, 10, 20
+
+    min_samples_leaf: 1       # Minimum samples required at leaf node
+                              # Higher = smoother decision boundaries
+                              # Try: 1, 2, 5, 10
+
+    max_leaf_nodes: null      # Maximum number of leaf nodes (null = unlimited)
+                              # Try: 10, 20, 50, 100, or null
+
+    subsample: 1.0            # Fraction of samples for fitting each tree
+                              # <1.0 enables stochastic gradient boosting
+                              # Try: 0.5, 0.7, 0.8, 1.0
+
+    # MLP refinement (applied after GBDT)
+    use_mlp_refinement: true  # Whether to use MLP refinement on GBDT output
+                              # Architecture if enabled: 1 -> 32 -> 16 -> 1
+
+# =============================================================================
+# EXPERIMENT TRACKING
+# =============================================================================
+experiment:
+  name: "default"           # Experiment name (used in results directory)
+  notes: ""                 # Additional notes about this configuration
+  tags: []                  # Tags for organization: e.g., ["baseline", "tuning"]
+
+# =============================================================================
+# DEVICE CONFIGURATION
+# =============================================================================
+device:
+  prefer: "auto"            # Options: auto, mps, cuda, cpu
+                           # auto = MPS > CUDA > CPU priority
+
+# =============================================================================
+# CONFIGURATION PRESETS
+# =============================================================================
+# Uncomment one of these presets to quickly switch between configurations
+# Or create your own custom configurations
+
+# # PRESET 1: Small Fast Model (for quick experimentation)
+# _preset_small:
+#   model:
+#     d_model: 32
+#     nhead: 4
+#     num_encoder_layers: 1
+#     dim_feedforward: 128
+#   training:
+#     batch_size: 64
+#     num_epochs: 20
+
+# # PRESET 2: Large Capacity Model (for best performance)
+# _preset_large:
+#   model:
+#     d_model: 128
+#     nhead: 8
+#     num_encoder_layers: 4
+#     dim_feedforward: 1024
+#   training:
+#     batch_size: 16
+#     learning_rate: 0.0005
+#     num_epochs: 50
+
+# # PRESET 3: Ensemble Head Exploration
+# _preset_ensemble:
+#   regression_head:
+#     type: "ensemble"
+#   model:
+#     d_model: 64
+#     num_encoder_layers: 2
+
+# # PRESET 4: GBDT Hybrid Approach
+# _preset_gbdt:
+#   regression_head:
+#     type: "gbdt"
+#   training:
+#     num_epochs: 20  # Fewer epochs since GBDT is fitted separately
+
+# =============================================================================
+# PARAMETER SEARCH SPACES (for hyperparameter optimization)
+# =============================================================================
+# Define search spaces for automated hyperparameter tuning
+search_spaces:
+  d_model: [32, 64, 128, 256]
+  nhead: [2, 4, 8]
+  num_encoder_layers: [1, 2, 3, 4]
+  dim_feedforward: [256, 512, 1024]
+  batch_size: [16, 32, 64]
+  learning_rate: [0.0001, 0.0005, 0.001, 0.005]
+  lasso_lambda: [0.001, 0.01, 0.1]
+  gbdt_n_estimators: [50, 100, 200]
+  gbdt_max_depth: [2, 3, 4, 5]
+
+# =============================================================================
+# NOTES ON PARAMETER TUNING
+# =============================================================================
+#
+# Key parameters to tune first (highest impact):
+# 1. d_model (32-256): Controls model capacity
+# 2. num_encoder_layers (1-4): Depth of transformer
+# 3. learning_rate (0.0001-0.005): Critical for convergence
+# 4. head type (mlp/ensemble/lasso/gbdt): Different inductive biases
+#
+# For Ensemble head:
+# - Start with equal weights (1.0, 1.0, 1.0)
+# - If validation loss plateaus, try emphasizing shallow (faster patterns)
+# - If underfitting, try emphasizing deep (complex patterns)
+#
+# For Lasso head:
+# - Higher lambda = sparser model (good for interpretability)
+# - Lower lambda = more capacity (better fit)
+# - Start with 0.01 and adjust based on validation performance
+#
+# For GBDT head:
+# - n_estimators vs learning_rate: trade-off (more trees = lower LR)
+# - max_depth controls complexity: start with 3, increase if underfitting
+# - subsample < 1.0 adds regularization (good for large datasets)
+#
+# Parameter constraints:
+# - d_model must be divisible by nhead
+# - Larger models need lower learning rates
+# - Deeper models may need more training epochs

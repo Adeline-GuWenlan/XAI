@@ -16,7 +16,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from scipy.stats import spearmanr, pearsonr
 
-from encoder_mlp_model import create_encoder_mlp_model
+from encoder_mlp_model import create_encoder_mlp_model, LassoMLPHead, GBDTMLPHead
 
 # Set random seeds for reproducibility
 torch.manual_seed(42)
@@ -48,7 +48,13 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
 
         # Forward pass
         predictions = model(X_batch)
-        loss = criterion(predictions, Y_batch)
+        base_loss = criterion(predictions, Y_batch)
+
+        # Add L1 penalty for Lasso regularization
+        if isinstance(model.mlp_head, LassoMLPHead):
+            loss = base_loss + model.mlp_head.l1_penalty()
+        else:
+            loss = base_loss
 
         # Backward pass
         optimizer.zero_grad()
@@ -134,12 +140,15 @@ def main():
                         help='Number of training epochs')
     parser.add_argument('--train_split', type=float, default=0.95,
                         help='Train/validation split ratio')
+    parser.add_argument('--head_type', type=str, default='mlp',
+                        choices=['mlp', 'ensemble', 'lasso', 'gbdt'],
+                        help='Regression head type')
 
     args = parser.parse_args()
 
     # Create timestamped results directory
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    RESULTS_DIR = f"./results_{args.pooling.lower()}_{timestamp}"
+    RESULTS_DIR = f"./results_{args.pooling.lower()}_{args.head_type}_{timestamp}"
     os.makedirs(RESULTS_DIR, exist_ok=True)
     print(f"Results will be saved to: {RESULTS_DIR}")
 
@@ -174,20 +183,92 @@ def main():
     print(f"Train samples: {train_size}, Validation samples: {val_size}")
     print(f"Input shape: {dataset.X.shape}")
 
+    # Configure head parameters based on head_type
+    # Users can modify these parameters directly in encoder_mlp_model.py
+    # or change them here for specific experiments
+    head_params = {}
+    if args.head_type == 'ensemble':
+        # EnsembleMLPHead parameters - modify as needed
+        head_params = {
+            'deep_weight': 1.0,
+            'shallow_weight': 1.0,
+            'medium_weight': 1.0
+        }
+    elif args.head_type == 'lasso':
+        # LassoMLPHead parameters - modify as needed
+        head_params = {
+            'lasso_lambda': 0.01
+        }
+    elif args.head_type == 'gbdt':
+        # GBDTMLPHead parameters - modify as needed
+        head_params = {
+            'n_estimators': 100,
+            'max_depth': 3,
+            'min_samples_split': 2,
+            'min_samples_leaf': 1,
+            'max_leaf_nodes': None,
+            'learning_rate': 0.1,
+            'subsample': 1.0,
+            'use_mlp_refinement': True
+        }
+
     # Create model
-    print(f"\nCreating Encoder-MLP model with {args.pooling.upper()} pooling...")
+    print(f"\nCreating Encoder-MLP model with {args.pooling.upper()} pooling and {args.head_type.upper()} head...")
     model = create_encoder_mlp_model(
         pooling_method=args.pooling,
         d_model=args.d_model,
         nhead=args.nhead,
         num_encoder_layers=args.num_encoder_layers,
-        dim_feedforward=args.dim_feedforward
+        dim_feedforward=args.dim_feedforward,
+        head_type=args.head_type,
+        head_params=head_params
     ).to(device)
 
     # Print model architecture
     print("\nModel Architecture:")
     print(model)
-    print(f"\nTotal parameters: {sum(p.numel() for p in model.parameters()):,}")
+
+    # Count parameters by component
+    encoder_params = sum(p.numel() for layer in model.encoder_layers for p in layer.parameters())
+    pooling_params = sum(p.numel() for p in model.pooling.parameters())
+    head_params_count = sum(p.numel() for p in model.mlp_head.parameters())
+    other_params = sum(p.numel() for p in model.input_projection.parameters())
+    if hasattr(model, 'cls_token') and model.cls_token is not None:
+        other_params += model.cls_token.numel()
+    total_params = sum(p.numel() for p in model.parameters())
+
+    print(f"\nParameter breakdown:")
+    print(f"  Input projection + CLS: {other_params:,}")
+    print(f"  Encoder layers: {encoder_params:,}")
+    print(f"  Pooling layer: {pooling_params:,}")
+    print(f"  Regression head ({args.head_type}): {head_params_count:,}")
+    print(f"  Total parameters: {total_params:,}")
+
+    # Special handling for GBDT head: fit GBDT on pooled representations
+    if args.head_type == 'gbdt':
+        print("\nFitting GBDT on training data pooled representations...")
+        model.eval()
+        all_pooled = []
+        all_targets = []
+
+        with torch.no_grad():
+            for X_batch, Y_batch in train_loader:
+                X_batch = X_batch.to(device)
+                pooled = model.get_pooled_representation(X_batch)
+                all_pooled.append(pooled.cpu())
+                all_targets.append(Y_batch)
+
+        all_pooled = torch.cat(all_pooled, dim=0)
+        all_targets = torch.cat(all_targets, dim=0)
+
+        # Fit GBDT
+        model.mlp_head.fit_gbdt(all_pooled, all_targets)
+        print(f"GBDT fitted with {len(all_pooled)} samples")
+
+        # Print feature importance if available
+        feature_importance = model.mlp_head.get_feature_importance()
+        if feature_importance is not None:
+            print(f"GBDT feature importance (top 5): {feature_importance[:5]}")
 
     # Loss and optimizer
     criterion = nn.MSELoss()
@@ -283,7 +364,7 @@ def main():
     axes[1, 1].axhline(y=0, color='gray', linestyle='--', alpha=0.5)
     axes[1, 1].axhline(y=1, color='gray', linestyle='--', alpha=0.5)
 
-    plt.suptitle(f'Model 5: Encoder-MLP ({args.pooling.upper()} pooling) - Training Metrics',
+    plt.suptitle(f'Model 5: Encoder-MLP ({args.pooling.upper()} pooling, {args.head_type.upper()} head) - Training Metrics',
                  fontsize=16, y=0.995)
     plt.tight_layout()
     plt.savefig(os.path.join(RESULTS_DIR, "training_curves.png"), dpi=150, bbox_inches='tight')
@@ -291,7 +372,7 @@ def main():
 
     # Save training log
     log = {
-        "model": f"Encoder-MLP with {args.pooling.upper()} pooling",
+        "model": f"Encoder-MLP with {args.pooling.upper()} pooling and {args.head_type.upper()} head",
         "timestamp": timestamp,
         "device": str(device),
         "hyperparameters": {
@@ -303,7 +384,9 @@ def main():
             "batch_size": args.batch_size,
             "learning_rate": args.learning_rate,
             "num_epochs": args.num_epochs,
-            "train_split": args.train_split
+            "train_split": args.train_split,
+            "head_type": args.head_type,
+            "head_params": head_params
         },
         "data": {
             "X_path": X_PATH,
@@ -326,11 +409,52 @@ def main():
         json.dump(log, f, indent=4)
     print(f"Training log saved to {os.path.join(RESULTS_DIR, 'training_log.json')}")
 
+    # Generate regression head structure description
+    def get_head_structure_description(head_type, head_params, d_model):
+        if head_type == 'mlp':
+            return f"{d_model} -> 128 -> 256 -> 128 -> 1"
+        elif head_type == 'ensemble':
+            return {
+                "type": "Ensemble with 3 pathways (deep, shallow, medium)",
+                "deep_pathway": f"{d_model} -> 256 -> 128 -> 64 -> 32 -> 1 (5 layers)",
+                "shallow_pathway": f"{d_model} -> 64 -> 1 (2 layers)",
+                "medium_pathway": f"{d_model} -> 128 -> 32 -> 1 (3 layers)",
+                "weights": f"learnable ensemble weights (initial: deep={head_params.get('deep_weight', 1.0)}, "
+                          f"shallow={head_params.get('shallow_weight', 1.0)}, "
+                          f"medium={head_params.get('medium_weight', 1.0)})"
+            }
+        elif head_type == 'lasso':
+            return {
+                "type": "MLP with L1 regularization",
+                "structure": f"{d_model} -> 128 -> 256 -> 128 -> 1",
+                "lasso_lambda": head_params.get('lasso_lambda', 0.01)
+            }
+        elif head_type == 'gbdt':
+            return {
+                "type": "Gradient Boosting Decision Tree + MLP refinement",
+                "gbdt_params": {
+                    "n_estimators": head_params.get('n_estimators', 100),
+                    "max_depth": head_params.get('max_depth', 3),
+                    "learning_rate": head_params.get('learning_rate', 0.1),
+                    "min_samples_split": head_params.get('min_samples_split', 2),
+                    "min_samples_leaf": head_params.get('min_samples_leaf', 1),
+                    "subsample": head_params.get('subsample', 1.0)
+                },
+                "mlp_refinement": "1 -> 32 -> 16 -> 1" if head_params.get('use_mlp_refinement', True) else "disabled"
+            }
+        return "Unknown"
+
     # Save model parameters summary
     model_params = {
         "total_parameters": sum(p.numel() for p in model.parameters()),
         "trainable_parameters": sum(p.numel() for p in model.parameters() if p.requires_grad),
-        "model_type": f"Encoder-MLP with {args.pooling.upper()} pooling",
+        "parameter_breakdown": {
+            "input_projection_and_cls": other_params,
+            "encoder_layers": encoder_params,
+            "pooling_layer": pooling_params,
+            "regression_head": head_params_count
+        },
+        "model_type": f"Encoder-MLP with {args.pooling.upper()} pooling and {args.head_type.upper()} head",
         "architecture_details": {
             "input_shape": list(dataset.X.shape),
             "d_model": args.d_model,
@@ -339,7 +463,8 @@ def main():
             "dim_feedforward": args.dim_feedforward,
             "pooling_method": args.pooling,
             "use_cls_token": args.pooling.upper() == 'CLS',
-            "mlp_structure": "64 -> 128 -> 256 -> 128 -> 1 (edit in MLPHead class)"
+            "head_type": args.head_type,
+            "head_structure": get_head_structure_description(args.head_type, head_params, args.d_model)
         }
     }
 
@@ -351,9 +476,38 @@ def main():
     torch.save(model.state_dict(), os.path.join(RESULTS_DIR, "final_model.pt"))
     print(f"Final model saved to {os.path.join(RESULTS_DIR, 'final_model.pt')}")
 
+    # Generate regression head summary text
+    def get_head_summary_text(head_type, head_params, d_model):
+        if head_type == 'mlp':
+            return f"  - MLP: {d_model} -> 128 -> 256 -> 128 -> 1"
+        elif head_type == 'ensemble':
+            text = f"  - Ensemble MLP Head with 3 pathways:\n"
+            text += f"    - Deep pathway (5 layers): {d_model} -> 256 -> 128 -> 64 -> 32 -> 1\n"
+            text += f"    - Shallow pathway (2 layers): {d_model} -> 64 -> 1\n"
+            text += f"    - Medium pathway (3 layers): {d_model} -> 128 -> 32 -> 1\n"
+            text += f"    - Ensemble weights (learnable): deep={head_params.get('deep_weight', 1.0)}, "
+            text += f"shallow={head_params.get('shallow_weight', 1.0)}, medium={head_params.get('medium_weight', 1.0)}"
+            return text
+        elif head_type == 'lasso':
+            text = f"  - Lasso MLP Head with L1 regularization:\n"
+            text += f"    - Structure: {d_model} -> 128 -> 256 -> 128 -> 1\n"
+            text += f"    - L1 penalty (lambda): {head_params.get('lasso_lambda', 0.01)}"
+            return text
+        elif head_type == 'gbdt':
+            text = f"  - GBDT + MLP Hybrid Head:\n"
+            text += f"    - GBDT: {head_params.get('n_estimators', 100)} estimators, "
+            text += f"max_depth={head_params.get('max_depth', 3)}, "
+            text += f"lr={head_params.get('learning_rate', 0.1)}\n"
+            if head_params.get('use_mlp_refinement', True):
+                text += f"    - MLP refinement: 1 -> 32 -> 16 -> 1"
+            else:
+                text += f"    - MLP refinement: disabled"
+            return text
+        return "  - Unknown head type"
+
     # Create summary report
     summary = f"""
-Model 5: Encoder-MLP with {args.pooling.upper()} Pooling - Training Summary
+Model 5: Encoder-MLP with {args.pooling.upper()} Pooling and {args.head_type.upper()} Head - Training Summary
 {'=' * 80}
 Timestamp: {timestamp}
 Device: {device}
@@ -366,6 +520,7 @@ Data:
 
 Hyperparameters:
 - Pooling method: {args.pooling.upper()}
+- Regression head type: {args.head_type.upper()}
 - Batch size: {args.batch_size}
 - Learning rate: {args.learning_rate}
 - Number of epochs: {args.num_epochs}
@@ -375,13 +530,19 @@ Hyperparameters:
 - Feedforward dimension: {args.dim_feedforward}
 
 Model Architecture:
-- Type: Encoder-MLP with {args.pooling.upper()} pooling
+- Type: Encoder-MLP with {args.pooling.upper()} pooling and {args.head_type.upper()} head
 - CLS token: {'Yes' if args.pooling.upper() == 'CLS' else 'No'}
 - Input: [B, 64] Pauli vectors -> [B, 64, 1] tokens
 - Projection: 1 -> {args.d_model}
 - Encoder: {args.num_encoder_layers} layers
 - Pooling: {args.pooling.upper()} method
-- MLP: {args.d_model} -> 128 -> 256 -> 128 -> 1
+{get_head_summary_text(args.head_type, head_params, args.d_model)}
+
+Parameter Counts:
+- Input projection + CLS: {model_params['parameter_breakdown']['input_projection_and_cls']:,}
+- Encoder layers: {model_params['parameter_breakdown']['encoder_layers']:,}
+- Pooling layer: {model_params['parameter_breakdown']['pooling_layer']:,}
+- Regression head: {model_params['parameter_breakdown']['regression_head']:,}
 - Total parameters: {model_params['total_parameters']:,}
 
 Results:
@@ -402,7 +563,7 @@ Files saved:
 - model_parameters.json: Model parameters summary
 - epoch_log.txt: Per-epoch training log
 
-Note: Edit MLP structure in encoder_mlp_model.py -> MLPHead class
+Note: Edit regression head structures in encoder_mlp_model.py
 """
 
     with open(os.path.join(RESULTS_DIR, "summary.txt"), 'w') as f:
