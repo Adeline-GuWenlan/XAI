@@ -138,15 +138,25 @@ class MLPHead(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
 
-        # Edit this structure as needed - default matches train_model4.py
+        # Sophisticated deep MLP architecture optimized for 512-dim input
+        # Expansion-compression pattern for better feature learning
         self.model = nn.Sequential(
-            nn.Linear(input_dim,256),      # MLP layer 1
-            nn.ReLU(),                      # ReLU activation 1
-            nn.Linear(256, 128),            # MLP layer 2
-            nn.ReLU(),                      # ReLU activation 2
-            nn.Linear(128, 32),            # MLP layer 3
-            nn.ReLU(),                      # ReLU activation 3
-            nn.Linear(32, 1)               # Output layer
+            # Expansion phase: capture complex feature interactions
+            nn.Linear(input_dim, input_dim * 2),   # e.g., 512 -> 1024 (expansion)
+            nn.ReLU(),
+
+            # Gradual compression with multiple transformation stages
+            nn.Linear(input_dim * 2, input_dim),   # 1024 -> 512
+            nn.ReLU(),
+            nn.Linear(input_dim, input_dim // 2),  # 512 -> 256
+            nn.ReLU(),
+            nn.Linear(input_dim // 2, input_dim // 4),  # 256 -> 128
+            nn.ReLU(),
+            nn.Linear(input_dim // 4, input_dim // 8),  # 128 -> 64
+            nn.ReLU(),
+
+            # Final prediction layer
+            nn.Linear(input_dim // 8, 1)           # 64 -> 1
         )
 
     def forward(self, x):
@@ -241,15 +251,22 @@ class LassoMLPHead(nn.Module):
         super().__init__()
         self.lasso_lambda = lasso_lambda
 
-        # MLP structure
+        # MLP structure - matches MLPHead with expansion-compression pattern
         self.model = nn.Sequential(
-            nn.Linear(input_dim, 256),
+            # Expansion phase
+            nn.Linear(input_dim, input_dim * 2),
             nn.ReLU(),
-            nn.Linear(256, 128),
+            # Gradual compression
+            nn.Linear(input_dim * 2, input_dim),
             nn.ReLU(),
-            nn.Linear(128, 64),
+            nn.Linear(input_dim, input_dim // 2),
             nn.ReLU(),
-            nn.Linear(64, 1)
+            nn.Linear(input_dim // 2, input_dim // 4),
+            nn.ReLU(),
+            nn.Linear(input_dim // 4, input_dim // 8),
+            nn.ReLU(),
+            # Output
+            nn.Linear(input_dim // 8, 1)
         )
 
     def forward(self, x):

@@ -15,8 +15,8 @@ data:
 # =============================================================================
 training:
   batch_size: 32
-  learning_rate: 0.0005
-  num_epochs: 30
+  learning_rate: 0.0001
+  num_epochs: 50
   optimizer: "adam"  # Options: adam, sgd, adamw
   # Optional: learning rate scheduler
   use_scheduler: false
@@ -33,8 +33,8 @@ model:
   d_model: 512              # Embedding dimension - try: 32, 64, 128, 256
   nhead: 8                 # Number of attention heads - must divide d_model evenly
                           # Try: 2, 4, 8 (ensure d_model % nhead == 0)
-  num_encoder_layers: 3    # Number of transformer encoder layers - try: 1, 2, 3, 4
-  dim_feedforward: 2048     # Feedforward network dimension - try: 256, 512, 1024, 2048
+  num_encoder_layers: 4    # Number of transformer encoder layers - try: 1, 2, 3, 4
+  dim_feedforward: 1024     # Feedforward network dimension - try: 256, 512, 1024, 2048
 
   # Pooling method
   pooling_method: "CLS"    # Options: "CLS" (CLS token) or "weight" (weighted aggregation)
@@ -44,7 +44,7 @@ model:
 # =============================================================================
 # Select ONE head type: mlp, ensemble, lasso, or gbdt
 regression_head:
-  type: "mlp"  # Options: mlp, ensemble, lasso, gbdt
+  type: "ensemble"  # Options: mlp, ensemble, lasso, gbdt
 
   # ----------------------------------------------------------------------------
   # MLP Head Parameters (type: mlp)
@@ -120,7 +120,7 @@ regression_head:
 # EXPERIMENT TRACKING
 # =============================================================================
 experiment:
-  name: "default"           # Experiment name (used in results directory)
+  name: "3q_512_8_4_1024_MLP"           # Experiment name (used in results directory)
   notes: ""                 # Additional notes about this configuration
   tags: []                  # Tags for organization: e.g., ["baseline", "tuning"]
 

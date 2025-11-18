@@ -242,3 +242,73 @@ If you use this model in your research, please cite:
 ```
 Model 5: Encoder-MLP Architecture for Quantum State Prediction
 ```
+
+
+
+Training completed! Best validation loss: 0.000008
+Epoch log saved to: ./results_cls_mlp_20251118_121934/epoch_log.txt
+Training curves saved to ./results_cls_mlp_20251118_121934/training_curves.png
+Training log saved to ./results_cls_mlp_20251118_121934/training_log.json
+Model parameters saved to ./results_cls_mlp_20251118_121934/model_parameters.json
+Final model saved to ./results_cls_mlp_20251118_121934/final_model.pt
+
+Model 5: Encoder-MLP with CLS Pooling and MLP Head - Training Summary
+================================================================================
+Timestamp: 20251118_121934
+Device: cuda
+
+Data:
+- Input shape: torch.Size([100000, 16])
+- Total samples: 100000
+- Training samples: 95000
+- Validation samples: 5000
+
+Hyperparameters:
+- Pooling method: CLS
+- Regression head type: MLP
+- Batch size: 32
+- Learning rate: 0.0005
+- Number of epochs: 30
+- Transformer d_model: 256
+- Number of attention heads: 4
+- Number of encoder layers: 3
+- Feedforward dimension: 512
+
+Model Architecture:
+- Type: Encoder-MLP with CLS pooling and MLP head
+- CLS token: Yes
+- Input: [B, 64] Pauli vectors -> [B, 64, 1] tokens
+- Projection: 1 -> 256
+- Encoder: 3 layers
+- Pooling: CLS method
+  - MLP: 256 -> 128 -> 256 -> 128 -> 1
+
+Parameter Counts:
+- Input projection + CLS: 768
+- Encoder layers: 1,581,312
+- Pooling layer: 0
+- Regression head: 102,849
+- Total parameters: 1,684,929
+
+Results:
+- Final training MSE: 0.000059
+- Final validation MSE: 0.000008
+- Best validation MSE: 0.000008
+
+Evaluation Metrics (Final Epoch):
+- R² Score: 0.999954
+- Spearman Correlation: 0.999983
+- Pearson Correlation: 0.999982
+
+Files saved:
+- best_model.pt: Best model checkpoint
+- final_model.pt: Final model after all epochs
+- training_curves.png: Comprehensive metrics visualization
+- training_log.json: Detailed training log
+- model_parameters.json: Model parameters summary
+- epoch_log.txt: Per-epoch training log
+
+Note: Edit regression head structures in encoder_mlp_model.py
+
+Summary saved to ./results_cls_mlp_20251118_121934/summary.txt
+(magic) [gwl@cdsw01 Model_5Encoder_MLP]$ 

@@ -153,7 +153,7 @@ def main():
     print(f"Results will be saved to: {RESULTS_DIR}")
 
     # Data paths
-    DATA_DIR = "/Users/guwenlan/Desktop/XAI/Full_Ori/3q"
+    DATA_DIR = "/home/gwl/Full_Ori/3q"
     X_PATH = os.path.join(DATA_DIR, "3q_100000samples_uniform_20251114_182049_pauli_vectors.npy")
     Y_PATH = os.path.join(DATA_DIR, "3q_100000samples_uniform_20251114_182049_sn_labels.npy")
 
@@ -412,7 +412,7 @@ def main():
     # Generate regression head structure description
     def get_head_structure_description(head_type, head_params, d_model):
         if head_type == 'mlp':
-            return f"{d_model} -> 128 -> 256 -> 128 -> 1"
+            return f"{d_model} -> {d_model*2} -> {d_model} -> {d_model//2} -> {d_model//4} -> {d_model//8} -> 1"
         elif head_type == 'ensemble':
             return {
                 "type": "Ensemble with 3 pathways (deep, shallow, medium)",
@@ -426,7 +426,7 @@ def main():
         elif head_type == 'lasso':
             return {
                 "type": "MLP with L1 regularization",
-                "structure": f"{d_model} -> 128 -> 256 -> 128 -> 1",
+                "structure": f"{d_model} -> {d_model*2} -> {d_model} -> {d_model//2} -> {d_model//4} -> {d_model//8} -> 1",
                 "lasso_lambda": head_params.get('lasso_lambda', 0.01)
             }
         elif head_type == 'gbdt':
@@ -479,7 +479,7 @@ def main():
     # Generate regression head summary text
     def get_head_summary_text(head_type, head_params, d_model):
         if head_type == 'mlp':
-            return f"  - MLP: {d_model} -> 128 -> 256 -> 128 -> 1"
+            return f"  - MLP (expansion-compression): {d_model} -> {d_model*2} -> {d_model} -> {d_model//2} -> {d_model//4} -> {d_model//8} -> 1"
         elif head_type == 'ensemble':
             text = f"  - Ensemble MLP Head with 3 pathways:\n"
             text += f"    - Deep pathway (5 layers): {d_model} -> 256 -> 128 -> 64 -> 32 -> 1\n"
@@ -490,7 +490,7 @@ def main():
             return text
         elif head_type == 'lasso':
             text = f"  - Lasso MLP Head with L1 regularization:\n"
-            text += f"    - Structure: {d_model} -> 128 -> 256 -> 128 -> 1\n"
+            text += f"    - Structure: {d_model} -> {d_model*2} -> {d_model} -> {d_model//2} -> {d_model//4} -> {d_model//8} -> 1\n"
             text += f"    - L1 penalty (lambda): {head_params.get('lasso_lambda', 0.01)}"
             return text
         elif head_type == 'gbdt':
