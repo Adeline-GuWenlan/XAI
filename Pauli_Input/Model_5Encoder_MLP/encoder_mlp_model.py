@@ -140,13 +140,13 @@ class MLPHead(nn.Module):
 
         # Edit this structure as needed - default matches train_model4.py
         self.model = nn.Sequential(
-            nn.Linear(input_dim, 128),      # MLP layer 1
+            nn.Linear(input_dim,256),      # MLP layer 1
             nn.ReLU(),                      # ReLU activation 1
-            nn.Linear(128, 256),            # MLP layer 2
+            nn.Linear(256, 128),            # MLP layer 2
             nn.ReLU(),                      # ReLU activation 2
-            nn.Linear(256, 128),            # MLP layer 3
+            nn.Linear(128, 32),            # MLP layer 3
             nn.ReLU(),                      # ReLU activation 3
-            nn.Linear(128, 1)               # Output layer
+            nn.Linear(32, 1)               # Output layer
         )
 
     def forward(self, x):
@@ -243,13 +243,13 @@ class LassoMLPHead(nn.Module):
 
         # MLP structure
         self.model = nn.Sequential(
-            nn.Linear(input_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 256),
+            nn.Linear(input_dim, 256),
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(128, 1)
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1)
         )
 
     def forward(self, x):
